@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# Cloudflare / secrets
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler
+
+# Learning
+CLAUDE.md
+LEARNING.md
