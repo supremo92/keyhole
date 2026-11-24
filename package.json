@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.4",
     "hono": "^4.13.21",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
@@ -20,6 +21,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "drizzle-kit": "^0.31.11",
     "oxlint": "^1.90.0",
     "typescript": "~5.9.3",
     "vite": "^8.3.6",
