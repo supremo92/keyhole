@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // The Worker's name on Cloudflare (also part of its default URL).
+  "name": "keyhole",
+  // Entry file: where the Worker's code starts.
+  "main": "worker/index.ts",
+  // Pins runtime behaviour to this date so platform updates don't change our code silently.
+  "compatibility_date": "2026-11-24",
+  "assets": {
+    // Unknown paths return index.html so the React router can handle them.
+    "not_found_handling": "single-page-application",
+    // These paths skip the asset check and go straight to the Worker.
+    "run_worker_first": ["/api/*"]
+  }
+  // D1 binding is added later, once `wrangler d1 create` gives us a database_id.
+}
