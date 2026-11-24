@@ -1,10 +1,4 @@
-import {
-    index,
-    integer,
-    sqliteTable,
-    text,
-    unique,
-} from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 // A door is a folder. Each user has doors in numbered slots on the hallway wall.
 export const doors = sqliteTable(

@@ -1,30 +1,36 @@
 {
-  "name": "keyhole",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "oxlint",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "drizzle-orm": "^0.45.4",
-    "hono": "^4.13.21",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1"
-  },
-  "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.70.1",
-    "@types/node": "^24.19.2",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.2",
-    "drizzle-kit": "^0.31.11",
-    "oxlint": "^1.90.0",
-    "typescript": "~5.9.3",
-    "vite": "^8.3.6",
-    "wrangler": "^4.168.0"
-  }
+    "name": "keyhole",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc -b && vite build",
+        "lint": "oxlint",
+        "preview": "vite preview",
+        "typecheck": "tsc -b",
+        "cf-typegen": "wrangler types",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate:local": "wrangler d1 migrations apply keyhole-db --local",
+        "db:migrate:remote": "wrangler d1 migrations apply keyhole-db --remote",
+        "deploy": "npm run build && wrangler deploy"
+    },
+    "dependencies": {
+        "drizzle-orm": "^0.45.4",
+        "hono": "^4.13.21",
+        "react": "^19.3.1",
+        "react-dom": "^19.3.1"
+    },
+    "devDependencies": {
+        "@cloudflare/vite-plugin": "^1.70.1",
+        "@types/node": "^24.19.2",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "@vitejs/plugin-react": "^6.1.2",
+        "drizzle-kit": "^0.31.11",
+        "oxlint": "^1.90.0",
+        "typescript": "~5.9.3",
+        "vite": "^8.3.6",
+        "wrangler": "^4.168.0"
+    }
 }
