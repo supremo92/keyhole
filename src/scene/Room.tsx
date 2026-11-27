@@ -1,12 +1,14 @@
 import { Html } from "@react-three/drei";
-import { useState } from "react";
+import { useFrame } from "@react-three/fiber";
+import { useRef } from "react";
+import { Shape, type MeshBasicMaterial } from "three";
 import { MAX_FURNITURE_SLOTS, type Wall, type WindowSpec } from "../../shared/constants";
 import type { Door, Note } from "../../shared/types";
 import { useNotes } from "../lib/api";
-import { openNote } from "../lib/flow";
 import { useView } from "../stores/view";
 import { Box } from "./Box";
 import { Furniture, NOTE_SPOT } from "./Furniture";
+import { OUTLINE_AIMED, OUTLINE_IDLE, OutlineContext } from "./outline";
 import { ROOM, ROOM_ORIGIN, type Vec3 } from "./layout";
 import { carpet, sky, wallpaper } from "./textures";
 
@@ -61,65 +63,100 @@ function RoomWindow({ spec }: { spec: WindowSpec }) {
     );
 }
 
-function PaperNote({ note, position, rotY }: { note: Note; position: Vec3; rotY: number }) {
-    const mode = useView((s) => s.mode);
-    const [hovered, setHovered] = useState(false);
-    const active = mode === "peeking";
-    const date = new Date(note.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+// Things the keyhole can be aimed at carry this in userData (see KeyholeAim).
+export const EXIT_ID = "exit";
 
+function NoteLabel({ note, show }: { note: Note; show: boolean }) {
+    const date = new Date(note.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+    return (
+        // Always mounted (drei Html dislikes mounting on hover); shown with CSS.
+        <Html position={[0, 0.3, 0]} center zIndexRange={[5, 0]} pointerEvents="none">
+            <div className={`note-label ${show ? "show" : ""}`}>
+                <strong>{note.title}</strong>
+                <span>{date}</span>
+            </div>
+        </Html>
+    );
+}
+
+function PaperNote({ note, position, rotY, aimed }: { note: Note; position: Vec3; rotY: number; aimed: boolean }) {
     return (
         <group position={position} rotation={[0, rotY, 0]}>
-            <group
-                onClick={(e) => {
-                    e.stopPropagation();
-                    if (active) void openNote(note.id);
-                }}
-                onPointerOver={(e) => {
-                    e.stopPropagation();
-                    setHovered(true);
-                    document.body.style.cursor = active ? "pointer" : "";
-                }}
-                onPointerOut={() => {
-                    setHovered(false);
-                    document.body.style.cursor = "";
-                }}
-            >
-                {/* Invisible, slightly bigger hit area so the thin paper is easy to point at. */}
-                <mesh position={[0, 0.06, 0]}>
-                    <boxGeometry args={[0.5, 0.14, 0.6]} />
-                    <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-                </mesh>
-                <Box size={[0.34, 0.008, 0.44]} color={note.colour} emissive={hovered && active ? "#7a6e40" : "#2a2618"} />
-                {[0.12, 0.06, 0, -0.06, -0.12].map((z) => (
-                    <Box key={z} size={[0.24, 0.002, 0.01]} position={[0, 0.005, z]} color="#7a8aa8" />
-                ))}
-            </group>
-            {/* Always mounted (drei Html dislikes mounting on hover); shown with CSS. */}
-            <Html position={[0, 0.3, 0]} center zIndexRange={[5, 0]} pointerEvents="none">
-                <div className={`note-label ${hovered && active ? "show" : ""}`}>
-                    <strong>{note.title}</strong>
-                    <span>{date}</span>
-                </div>
-            </Html>
+            {/* Invisible, slightly bigger target so the thin paper is easy to aim at. */}
+            <mesh position={[0, 0.06, 0]}>
+                <boxGeometry args={[0.5, 0.14, 0.6]} />
+                <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+            </mesh>
+            <Box size={[0.34, 0.008, 0.44]} color={note.colour} emissive={aimed ? "#7a6e40" : "#2a2618"} />
+            {[0.12, 0.06, 0, -0.06, -0.12].map((z) => (
+                <Box key={z} size={[0.24, 0.002, 0.01]} position={[0, 0.005, z]} color="#7a8aa8" />
+            ))}
+            <NoteLabel note={note} show={aimed} />
         </group>
     );
 }
 
+// A piece of furniture and its note. Aiming at either one selects the note.
 function Placed({ note }: { note: Note }) {
+    const aimed = useView((s) => s.mode === "peeking" && s.hoveredId === note.id);
     const r = hash(note.id);
+    const target = { interactId: note.id };
+
     if (note.roomSlot < MAX_FURNITURE_SLOTS) {
         const [x, z, rot] = SLOTS[note.roomSlot];
         return (
-            <group position={[x, 0, z]} rotation={[0, rot, 0]}>
-                <Furniture type={note.furniture} />
-                <PaperNote note={note} position={NOTE_SPOT[note.furniture]} rotY={(r - 0.5) * 0.8} />
+            <group position={[x, 0, z]} rotation={[0, rot, 0]} userData={target}>
+                <OutlineContext.Provider value={aimed ? OUTLINE_AIMED : OUTLINE_IDLE}>
+                    <Furniture type={note.furniture} />
+                </OutlineContext.Provider>
+                <PaperNote note={note} position={NOTE_SPOT[note.furniture]} rotY={(r - 0.5) * 0.8} aimed={aimed} />
             </group>
         );
     }
-    // No furniture left: the note joins the pile on the floor.
+    // No furniture left: the note joins the pile on the floor (to the right of the exit arrow).
     const k = note.roomSlot - MAX_FURNITURE_SLOTS;
-    const pos: Vec3 = [-0.5 + ((k * 37) % 10) / 10, 0.01 + k * 0.007, -1.6 - ((k * 53) % 8) / 10];
-    return <PaperNote note={note} position={pos} rotY={r * Math.PI * 2} />;
+    const pos: Vec3 = [0.7 + ((k * 37) % 10) / 12, 0.01 + k * 0.007, -2.2 - ((k * 53) % 8) / 10];
+    return (
+        <group userData={target}>
+            <PaperNote note={note} position={pos} rotY={r * Math.PI * 2} aimed={aimed} />
+        </group>
+    );
+}
+
+// A glowing arrow on the floor just inside the door: aim at it and click to leave.
+const arrowShape = (() => {
+    const s = new Shape();
+    s.moveTo(0, 0.42);
+    s.lineTo(0.3, 0.08);
+    s.lineTo(0.12, 0.08);
+    s.lineTo(0.12, -0.32);
+    s.lineTo(-0.12, -0.32);
+    s.lineTo(-0.12, 0.08);
+    s.lineTo(-0.3, 0.08);
+    s.closePath();
+    return s;
+})();
+
+function ExitArrow() {
+    const aimed = useView((s) => s.mode === "peeking" && s.hoveredId === EXIT_ID);
+    const material = useRef<MeshBasicMaterial>(null);
+    useFrame(({ clock }) => {
+        if (material.current) material.current.opacity = aimed ? 1 : 0.55 + Math.sin(clock.elapsedTime * 3) * 0.25;
+    });
+    return (
+        <group position={[0, 0.015, -1.5]} userData={{ interactId: EXIT_ID }}>
+            {/* Lying flat, pointing back towards the door. */}
+            <mesh rotation={[-Math.PI / 2, 0, Math.PI]} scale={aimed ? 1.15 : 1}>
+                <shapeGeometry args={[arrowShape]} />
+                <meshBasicMaterial ref={material} color={aimed ? "#fff3b0" : "#f3d27a"} transparent />
+            </mesh>
+            <Html position={[0, 0.25, 0]} center zIndexRange={[5, 0]} pointerEvents="none">
+                <div className={`note-label ${aimed ? "show" : ""}`}>
+                    <strong>Back to the hallway</strong>
+                </div>
+            </Html>
+        </group>
+    );
 }
 
 export function Room({ door }: { door: Door }) {
@@ -129,8 +166,9 @@ export function Room({ door }: { door: Door }) {
 
     return (
         <group position={ROOM_ORIGIN}>
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -D / 2]} receiveShadow>
-                <planeGeometry args={[ROOM.width, D]} />
+            {/* The floor runs a little past the door so looking down never shows a gap. */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -D / 2 + 1]} receiveShadow>
+                <planeGeometry args={[ROOM.width, D + 2]} />
                 <meshStandardMaterial map={floor} roughness={1} />
             </mesh>
             <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, ROOM.height, -D / 2]}>
@@ -169,6 +207,7 @@ export function Room({ door }: { door: Door }) {
             </mesh>
             <pointLight position={[0, ROOM.height - 0.4, -D / 2]} intensity={20} distance={14} decay={1.4} color="#ffe6bd" castShadow />
 
+            <ExitArrow />
             {notes.map((n) => (
                 <Placed key={n.id} note={n} />
             ))}

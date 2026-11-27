@@ -1,5 +1,6 @@
 import type { ThreeElements } from "@react-three/fiber";
 import type { Vec3 } from "./layout";
+import { OutlineFor } from "./outline";
 
 type Props = Omit<ThreeElements["mesh"], "position"> & {
     size: Vec3;
@@ -24,6 +25,7 @@ export function Box({ size, color, emissive, roughness = 0.8, metalness = 0, opa
                 transparent={opacity < 1}
                 opacity={opacity}
             />
+            {opacity === 1 && <OutlineFor />}
         </mesh>
     );
 }

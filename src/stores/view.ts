@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { VIEWS, type View } from "../scene/layout";
+import { VIEWS, WALK, type View } from "../scene/layout";
 
 // hallway: looking down the corridor. moving: camera in flight, input ignored.
 // peeking: looking into a room through the keyhole. writing/reading: paper note open.
@@ -17,7 +17,13 @@ type ViewState = {
     blackout: boolean;
     keyhole: boolean;
     cam: CamTarget;
-    set: (patch: Partial<Omit<ViewState, "set" | "moveCam">>) => void;
+    // Where you are standing in the hallway, and what the keyhole is aimed at.
+    hallZ: number;
+    hoveredId: string | null;
+    // A modal (the intro card) is open over the hallway: no walking.
+    paused: boolean;
+    walkTo: (z: number) => void;
+    set: (patch: Partial<Omit<ViewState, "set" | "moveCam" | "walkTo">>) => void;
     moveCam: (view: View, instant?: boolean) => void;
 };
 
@@ -29,7 +35,15 @@ export const useView = create<ViewState>((set, get) => ({
     unboarding: null,
     blackout: false,
     keyhole: false,
-    cam: { ...VIEWS.hallway, instant: true, seq: 0 },
+    cam: { ...VIEWS.hallway(WALK.start), instant: true, seq: 0 },
+    hallZ: WALK.start,
+    hoveredId: null,
+    paused: false,
+    walkTo: (z) => {
+        if (get().paused) return;
+        const hallZ = Math.min(WALK.max, Math.max(WALK.min, z));
+        set({ hallZ, cam: { ...VIEWS.hallway(hallZ), instant: false, seq: get().cam.seq + 1 } });
+    },
     set: (patch) => set(patch),
     moveCam: (view, instant = false) => set({ cam: { ...view, instant, seq: get().cam.seq + 1 } }),
 }));

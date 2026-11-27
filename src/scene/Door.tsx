@@ -48,22 +48,22 @@ export function Door({ door }: { door: DoorData }) {
                 />
                 {[0.24, -0.24].map((x) =>
                     [1.55, 0.6].map((y) => (
-                        <Box key={`${x}${y}`} size={[0.36, 0.68, 0.02]} position={[x, y, 0.07]} color="#000000" opacity={0.18} />
+                        <Box key={`${x}${y}`} size={[0.36, 0.68, 0.016]} position={[x, y, 0.07]} color="#000000" opacity={0.18} />
                     )),
                 )}
                 {/* Handle, backplate and the all-important keyhole. */}
-                <Box size={[0.09, 0.32, 0.02]} position={[KEYHOLE[0], 0.95, 0.07]} color="#c9a43b" metalness={0.6} roughness={0.35} />
-                <mesh position={[KEYHOLE[0], 1.03, 0.11]}>
+                <Box size={[0.09, 0.32, 0.024]} position={[KEYHOLE[0], 0.95, 0.075]} color="#c9a43b" metalness={0.6} roughness={0.35} />
+                <mesh position={[KEYHOLE[0], 1.03, 0.125]}>
                     <sphereGeometry args={[0.05, 16, 16]} />
                     <meshStandardMaterial color="#d8b54a" metalness={0.7} roughness={0.25} />
                 </mesh>
-                <mesh position={[KEYHOLE[0], KEYHOLE[1] + 0.008, 0.081]}>
+                <mesh position={[KEYHOLE[0], KEYHOLE[1] + 0.008, 0.0885]}>
                     <circleGeometry args={[0.013, 16]} />
-                    <meshBasicMaterial color="#050302" />
+                    <meshBasicMaterial color="#050302" polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} />
                 </mesh>
-                <mesh position={[KEYHOLE[0], KEYHOLE[1] - 0.012, 0.081]}>
+                <mesh position={[KEYHOLE[0], KEYHOLE[1] - 0.012, 0.0885]}>
                     <planeGeometry args={[0.012, 0.03]} />
-                    <meshBasicMaterial color="#050302" />
+                    <meshBasicMaterial color="#050302" polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} />
                 </mesh>
             </group>
             <Html position={[0, 2.5, 0.1]} center zIndexRange={[5, 0]} pointerEvents="none">

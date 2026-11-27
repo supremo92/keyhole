@@ -1,18 +1,19 @@
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
-import { Vector3 } from "three";
+import { MathUtils, PerspectiveCamera, Vector3 } from "three";
 import { useView } from "../stores/view";
+import { AIM_NDC } from "./layout";
 
 // Eases the camera towards the target in the store, and adds mouse-look.
 export function CameraRig() {
     const look = useRef<Vector3 | null>(null);
     const lastSeq = useRef(-1);
-    const sway = useRef({ x: 0, y: 0 });
+    const turn = useRef({ yaw: 0, pitch: 0 });
     const target = useRef(new Vector3());
 
     useFrame((state, dt) => {
         const { cam, mode } = useView.getState();
-        const camera = state.camera;
+        const camera = state.camera as PerspectiveCamera;
         if (!look.current) look.current = new Vector3(...cam.look);
 
         if (cam.seq !== lastSeq.current && cam.instant) {
@@ -26,13 +27,25 @@ export function CameraRig() {
         look.current.lerp(target.current.set(...cam.look), k);
         camera.lookAt(look.current);
 
-        // Peeking lets you look around a little; the hallway just sways.
-        const strength = mode === "peeking" ? 1 : mode === "hallway" ? 0.12 : 0;
+        // Peeking: turn so that whatever was under the mouse pointer moves into the
+        // centre of the keyhole (the aim point). The hallway just sways a little.
+        let yaw = 0;
+        let pitch = 0;
+        const { x, y } = state.pointer;
+        if (mode === "peeking") {
+            const tanV = Math.tan(MathUtils.degToRad(camera.fov / 2));
+            const tanH = tanV * camera.aspect;
+            yaw = -Math.atan((x - AIM_NDC[0]) * tanH);
+            pitch = Math.atan((y - AIM_NDC[1]) * tanV);
+        } else if (mode === "hallway") {
+            yaw = -x * 0.08;
+            pitch = y * 0.04;
+        }
         const s = Math.min(1, dt * 4);
-        sway.current.x += (state.pointer.x * strength - sway.current.x) * s;
-        sway.current.y += (state.pointer.y * strength - sway.current.y) * s;
-        camera.rotateY(-sway.current.x * 0.75);
-        camera.rotateX(sway.current.y * 0.3);
+        turn.current.yaw += (yaw - turn.current.yaw) * s;
+        turn.current.pitch += (pitch - turn.current.pitch) * s;
+        camera.rotateY(turn.current.yaw);
+        camera.rotateX(turn.current.pitch);
     });
 
     return null;

@@ -1,5 +1,5 @@
 import type { Door, Note } from "../../shared/types";
-import { leaveRoom, startWriting } from "../lib/flow";
+import { startWriting } from "../lib/flow";
 import { useView } from "../stores/view";
 
 export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: Note[] | undefined; onHelp: () => void }) {
@@ -18,7 +18,9 @@ export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: No
             )}
 
             {mode === "hallway" && (
-                <div className="hint">Click a door to peek through its keyhole. Click a boarded-up doorway to pry it open.</div>
+                <div className="hint">
+                    Scroll or use W/S to walk. Click a door to peek through its keyhole, or a boarded-up doorway to pry it open.
+                </div>
             )}
 
             {mode === "peeking" && door && (
@@ -31,13 +33,10 @@ export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: No
                     </div>
                     <div className="hint">
                         {notes?.length
-                            ? "Move the mouse to look around. Hover over a note to see its label, click it to take it out."
-                            : "An empty room. Slide a note under the door and something will turn up."}
+                            ? "Point the mouse to look around. Line something up in the keyhole and click to take its note out. Look down at the arrow to leave."
+                            : "An empty room. Slide a note under the door and something will turn up. Look down at the arrow to leave."}
                     </div>
                     <div className="room-actions">
-                        <button className="btn ghost" onClick={() => void leaveRoom()}>
-                            ← Back to the hallway
-                        </button>
                         <button className="btn" onClick={() => void startWriting()}>
                             ✎ Slide a note under the door
                         </button>

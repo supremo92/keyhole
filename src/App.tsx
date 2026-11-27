@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useDoors, useNotes } from "./lib/api";
 import { ensureSession } from "./lib/auth-client";
 import { leaveRoom } from "./lib/flow";
@@ -10,8 +11,10 @@ import { KeyholeMask } from "./overlays/KeyholeMask";
 import { NamePrompt } from "./overlays/NamePrompt";
 import { PaperSheet } from "./overlays/PaperSheet";
 import { CameraRig } from "./scene/CameraRig";
+import { KeyholeAim } from "./scene/KeyholeAim";
+import { Walker } from "./scene/Walker";
 import { Hallway } from "./scene/Hallway";
-import { VIEWS } from "./scene/layout";
+import { VIEWS, WALK } from "./scene/layout";
 import { Room } from "./scene/Room";
 import { useView } from "./stores/view";
 
@@ -30,12 +33,19 @@ export default function App() {
 function Keyhole() {
     const [auth, setAuth] = useState<"pending" | "ready" | "error">("pending");
     const appRef = useRef<HTMLDivElement>(null);
-    const { mode, doorId, doorSlot, noteId, blackout, keyhole } = useView();
+    const { mode, doorId, doorSlot, noteId, blackout, keyhole } = useView(
+        useShallow((s) => ({ mode: s.mode, doorId: s.doorId, doorSlot: s.doorSlot, noteId: s.noteId, blackout: s.blackout, keyhole: s.keyhole })),
+    );
     const doors = useDoors(auth === "ready");
     const door = doors.data?.find((d) => d.id === doorId);
     const notes = useNotes(doorId);
     const note = notes.data?.find((n) => n.id === noteId);
     const [showIntro, setShowIntro] = useState(() => !localStorage.getItem(INTRO_KEY));
+
+    const loading = auth === "pending" || doors.isPending;
+    const failed = auth === "error" || doors.isError;
+    const introOpen = showIntro && !loading && mode === "hallway";
+    useEffect(() => useView.getState().set({ paused: introOpen }), [introOpen]);
 
     const closeIntro = () => {
         localStorage.setItem(INTRO_KEY, "1");
@@ -56,8 +66,6 @@ function Keyhole() {
         return () => window.removeEventListener("keydown", onKey);
     }, []);
 
-    const loading = auth === "pending" || doors.isPending;
-    const failed = auth === "error" || doors.isError;
 
     return (
         <div className="app">
@@ -67,7 +75,7 @@ function Keyhole() {
             <div className="stage" ref={appRef}>
                 <Canvas
                     shadows
-                    camera={{ fov: 60, position: VIEWS.hallway.pos, near: 0.05, far: 200 }}
+                    camera={{ fov: 60, position: VIEWS.hallway(WALK.start).pos, near: 0.05, far: 200 }}
                     dpr={[1, 2]}
                     eventSource={appRef as React.RefObject<HTMLElement>}
                     eventPrefix="client"
@@ -76,6 +84,8 @@ function Keyhole() {
                     <ambientLight intensity={0.5} />
                     <hemisphereLight args={["#fff3dd", "#3a2a1e", 0.5]} />
                     <CameraRig />
+                    <Walker />
+                    <KeyholeAim />
                     {doors.data && <Hallway doors={doors.data} />}
                     {door && <Room door={door} />}
                 </Canvas>
@@ -87,7 +97,7 @@ function Keyhole() {
             {mode === "writing" && door && <PaperSheet mode="write" doorId={door.id} />}
             {mode === "reading" && door && note && <PaperSheet key={note.id} mode="read" doorId={door.id} note={note} />}
             {mode === "naming" && doorSlot !== null && <NamePrompt slot={doorSlot} />}
-            {showIntro && !loading && mode === "hallway" && <Intro onClose={closeIntro} />}
+            {introOpen && <Intro onClose={closeIntro} />}
 
             <div className={`blackout ${blackout ? "on" : ""}`} />
             {(loading || failed) && (

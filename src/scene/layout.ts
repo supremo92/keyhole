@@ -5,8 +5,13 @@ export type Vec3 = [number, number, number];
 // The hallway runs along -z. Doors sit on the end wall (slot 0) and the side walls.
 export const HALL = { width: 4, height: 3, near: 6, far: -14 };
 export const DOOR = { width: 1.1, height: 2.2 };
+// How far you can walk along the hallway (camera z).
+export const WALK = { start: 5, min: -9.5, max: 5 };
 // Keyhole position in a door's local space (x right, y up, z out of the door).
 export const KEYHOLE: Vec3 = [0.4, 0.865, 0];
+// Centre of the keyhole overlay's round part, in screen coordinates (-1..1, y up).
+// Matches the circle in KeyholeMask (cy=-14 in a 100-unit-tall viewBox).
+export const AIM_NDC: [number, number] = [0, 0.28];
 
 // Rooms are drawn far away from the hallway; the keyhole hides the jump.
 export const ROOM_ORIGIN: Vec3 = [100, 0, 0];
@@ -41,7 +46,8 @@ export type View = { pos: Vec3; look: Vec3 };
 
 // Fixed camera presets.
 export const VIEWS = {
-    hallway: { pos: [0, 1.7, 5], look: [0, 1.3, -8] } as View,
+    // Standing in the hallway at depth z, looking towards the end wall.
+    hallway: (z: number): View => ({ pos: [0, 1.7, z], look: [0, 1.3, z - 13] }),
     doorFront: (slot: number): View => ({
         pos: doorToWorld(slot, [0, 1.45, 2.1]),
         look: doorToWorld(slot, [0, 1.2, 0]),

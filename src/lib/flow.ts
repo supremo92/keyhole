@@ -50,7 +50,7 @@ export async function leaveRoom() {
     await sleep(60);
     view().set({ blackout: false });
     sounds.whoosh();
-    view().moveCam(VIEWS.hallway);
+    view().moveCam(VIEWS.hallway(view().hallZ));
     await sleep(800);
     view().set({ mode: "hallway", doorId: null, doorSlot: null });
 }
@@ -92,7 +92,7 @@ export async function unboard(slot: number) {
 
 export async function cancelNaming() {
     view().set({ mode: "moving", unboarding: null });
-    view().moveCam(VIEWS.hallway);
+    view().moveCam(VIEWS.hallway(view().hallZ));
     await sleep(700);
     view().set({ mode: "hallway", doorSlot: null });
 }

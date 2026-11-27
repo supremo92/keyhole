@@ -25,6 +25,10 @@ export function KeyholeMask({ open }: { open: boolean }) {
             </defs>
             <rect x="-2000" y="-2000" width="4000" height="4000" fill="url(#keyhole-vignette)" />
             <rect x="-2000" y="-2000" width="4000" height="4000" fill="#050302" mask="url(#keyhole-mask)" />
+            {/* A faint aiming ring in the middle of the keyhole. */}
+            <g className="keyhole-shape">
+                <circle cx="0" cy="-14" r="1.6" fill="none" stroke="#fff6dc" strokeOpacity="0.45" strokeWidth="0.35" />
+            </g>
         </svg>
     );
 }

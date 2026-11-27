@@ -1,5 +1,6 @@
 import type { FurnitureType } from "../../shared/constants";
 import { Box } from "./Box";
+import { OutlineFor } from "./outline";
 import type { Vec3 } from "./layout";
 
 // Where a note rests on each piece of furniture (local space, front faces +z).
@@ -95,6 +96,7 @@ function Stool() {
             <mesh position={[0, 0.6, 0]} castShadow>
                 <cylinderGeometry args={[0.25, 0.25, 0.07, 24]} />
                 <meshStandardMaterial color="#b5523b" roughness={0.9} />
+                <OutlineFor />
             </mesh>
             {[0, 1, 2].map((i) => {
                 const a = (i / 3) * Math.PI * 2;
@@ -102,6 +104,7 @@ function Stool() {
                     <mesh key={i} position={[Math.cos(a) * 0.16, 0.3, Math.sin(a) * 0.16]} rotation={[Math.sin(a) * 0.12, 0, -Math.cos(a) * 0.12]}>
                         <cylinderGeometry args={[0.025, 0.025, 0.6, 8]} />
                         <meshStandardMaterial color={DARK_WOOD} />
+                        <OutlineFor />
                     </mesh>
                 );
             })}
