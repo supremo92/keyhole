@@ -39,8 +39,6 @@ type ViewState = {
     hoveredId: string | null;
     // A modal (the intro card) is open over the hallway: no walking.
     paused: boolean;
-    // Peeking and looking down at the doormat icons (pointer visible).
-    doormat: boolean;
     // Your pencilled guesses: glyph -> word. Kept between visits (localStorage).
     pencil: Record<string, Word>;
     // Replies you're building, per room (glyphs).
@@ -79,7 +77,6 @@ export const useView = create<ViewState>((set, get) => ({
     hallZ: WALK.start,
     hoveredId: null,
     paused: false,
-    doormat: false,
     pencil: loadPencil(),
     drafts: {},
     boardTilt: 0,

@@ -46,7 +46,6 @@ function Keyhole() {
         })),
     );
     const aimed = useView((s) => s.mode === "peeking" && s.hoveredId !== null);
-    const doormat = useView((s) => s.doormat);
     const shift = useShift(auth === "ready");
     const [showIntro, setShowIntro] = useState(() => !localStorage.getItem(INTRO_KEY));
 
@@ -68,8 +67,10 @@ function Keyhole() {
     }, []);
 
     useEffect(() => {
+        // Esc, S or the down arrow: step back from the keyhole into the hallway.
         const onKey = (e: KeyboardEvent) => {
-            if (e.key === "Escape") void leaveRoom();
+            const back = e.key === "Escape" || e.key === "s" || e.key === "S" || e.key === "ArrowDown";
+            if (back && useView.getState().mode === "peeking") void leaveRoom();
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
@@ -101,7 +102,7 @@ function Keyhole() {
                 </Canvas>
             </div>
 
-            <KeyholeMask open={keyhole} aimed={aimed} showRing={!doormat} />
+            <KeyholeMask open={keyhole} aimed={aimed} showRing />
             <EyeFlash />
             <Hud shift={shift.data} onHelp={() => setShowIntro(true)} />
             <Tannoy />

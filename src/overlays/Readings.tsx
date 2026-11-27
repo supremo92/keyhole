@@ -122,9 +122,12 @@ export function BoardOverlay({ shift }: { shift: ShiftState | undefined }) {
                 </section>
                 <section className="board-pin pink">
                     <h3>Notices</h3>
-                    <p>Residents must not be answered after the bell. There is no bell.</p>
-                    <p>LOST: one (1) Night Operator. If found, do not return.</p>
+                    <p>There is no bell. Do not answer the bell. Do not look for the bell. There is no bell.</p>
                     {tilted && <p className="board-odd">Someone has moved these notices around. Nobody was out here.</p>}
+                </section>
+                <section className="board-pin">
+                    <h3>Lost</h3>
+                    <p>One (1) Night Operator. If found, do not return.</p>
                 </section>
                 {waiting && (
                     <section className="board-pin green">
@@ -151,6 +154,8 @@ export function BoardOverlay({ shift }: { shift: ShiftState | undefined }) {
 
 // ---------------------------------------------------------------- Your locker
 
+// The inside of your locker door: your staff ID hanging from a hook, your Phrasebook stuck
+// up with magnets, and a post-it somebody left.
 export function LockerOverlay({ shift }: { shift: ShiftState | undefined }) {
     const pencil = useView((s) => s.pencil);
     const known = new Set(shift?.phrasebook.map(([, g]) => g));
@@ -158,40 +163,67 @@ export function LockerOverlay({ shift }: { shift: ShiftState | undefined }) {
     useEscape(() => void closeReading());
     return (
         <div className="modal-stage" onClick={() => void closeReading()}>
-            <div className="locker-card" onClick={(e) => e.stopPropagation()}>
-                <section className="badge">
-                    <div className="badge-head">INSTITUTE OF ROOMS · STAFF</div>
-                    <div className="badge-photo">◔ ◔</div>
-                    <div className="badge-title">{glyphOf("operator")}</div>
-                    <div className="badge-foot">NIGHT SHIFT</div>
-                </section>
-                <section className="phrasebook">
-                    <h3>Phrasebook</h3>
-                    <div className="phrase-grid">
-                        {shift?.phrasebook.map(([word, glyph]) => (
-                            <span key={glyph} className="phrase">
-                                <b>{glyph}</b>
-                                {word}
-                            </span>
-                        ))}
-                    </div>
-                    {guesses.length > 0 && (
-                        <>
-                            <h3>Pencilled guesses</h3>
-                            <div className="phrase-grid">
-                                {guesses.map(([glyph, word]) => (
-                                    <span key={glyph} className="phrase pencilled">
-                                        <b>{glyph}</b>
-                                        {word}?
-                                    </span>
-                                ))}
+            <div className="locker-door" onClick={(e) => e.stopPropagation()}>
+                <div className="locker-vents" aria-hidden>
+                    {Array.from({ length: 6 }, (_, i) => (
+                        <span key={i} />
+                    ))}
+                </div>
+
+                <div className="locker-inside">
+                    <div className="badge-hang">
+                        <span className="hook" aria-hidden />
+                        <span className="lanyard" aria-hidden />
+                        {/* Your staff ID. Your job title is printed in their script. */}
+                        <section className="badge" aria-label="Your staff ID badge">
+                            <div className="badge-head">INSTITUTE OF ROOMS</div>
+                            <div className="badge-sub">Staff identification</div>
+                            <div className="badge-photo" aria-hidden>
+                                <svg viewBox="0 0 60 70">
+                                    <circle cx="30" cy="24" r="13" fill="#5d5955" />
+                                    <path d="M6 70 Q8 44 30 42 Q52 44 54 70 Z" fill="#5d5955" />
+                                </svg>
                             </div>
-                        </>
-                    )}
-                    <p className="locker-note">
-                        Taped inside the door, in someone else's handwriting: <q>Don't feed the cat. It isn't hungry. It just wants you to know it could be.</q>
-                    </p>
-                </section>
+                            <div className="badge-row">
+                                <span>Role</span>
+                                <b className="badge-glyph">{glyphOf("operator")}</b>
+                            </div>
+                            <div className="badge-row">
+                                <span>Shift</span>
+                                <b>Night</b>
+                            </div>
+                            <div className="badge-barcode" aria-hidden />
+                        </section>
+                        <div className="post-it">Don't feed the cat. It isn't hungry anymore.</div>
+                    </div>
+
+                    <section className="phrasebook">
+                        <h3>Phrasebook</h3>
+                        <div className="phrase-grid">
+                            {shift?.phrasebook.map(([word, glyph], i) => (
+                                <span key={glyph} className="phrase" style={{ rotate: `${((i * 37) % 7) - 3}deg` }}>
+                                    <i className="magnet" aria-hidden />
+                                    <b>{glyph}</b>
+                                    {word}
+                                </span>
+                            ))}
+                        </div>
+                        {guesses.length > 0 && (
+                            <>
+                                <h3>Pencilled guesses</h3>
+                                <div className="phrase-grid">
+                                    {guesses.map(([glyph, word]) => (
+                                        <span key={glyph} className="phrase pencilled">
+                                            <b>{glyph}</b>
+                                            {word}?
+                                        </span>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </section>
+                </div>
+
                 <button className="btn locker-close" onClick={() => void closeReading()}>
                     Close the locker
                 </button>

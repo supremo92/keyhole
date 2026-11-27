@@ -417,10 +417,10 @@ export function OfficeScene({ solved, cat }: { solved: boolean; cat: CatSpot }) 
         const t = clock.elapsedTime;
         // The chair is still turning. Someone was just sitting in it.
         if (chair.current) chair.current.rotation.y += dt * spin * Math.max(0, 1 - t / 40);
-        // The strip light can't make up its mind.
-        const on = Math.sin(t * 2.1) + Math.sin(t * 17) * 0.4 > -1.1;
-        if (tube.current) tube.current.intensity = on ? 9 : 2.5;
-        if (tubeMat.current) tubeMat.current.color.set(on ? "#f2fff4" : "#56605a");
+        // The strip light hums and wavers slightly. (Gentle on purpose: no flashing.)
+        const waver = 0.92 + Math.sin(t * 1.3) * 0.04 + Math.sin(t * 3.7) * 0.03;
+        if (tube.current) tube.current.intensity = 9 * waver;
+        if (tubeMat.current) tubeMat.current.color.setScalar(0.85 + waver * 0.1);
         drops.current.forEach((d, i) => {
             if (!d) return;
             const k = (t * 0.9 + i / 3) % 1;
@@ -476,7 +476,7 @@ export function OfficeScene({ solved, cat }: { solved: boolean; cat: CatSpot }) 
             {/* The leak: a stain on the ceiling, drips, and a bucket. */}
             <mesh rotation={[Math.PI / 2, 0, 0]} position={[DRIP_AT[0], 2.995, DRIP_AT[2]]}>
                 <planeGeometry args={[1.4, 1.4]} />
-                <meshBasicMaterial map={dampTexture(5)} transparent depthWrite={false} />
+                <meshStandardMaterial map={dampTexture(5)} transparent depthWrite={false} roughness={1} />
             </mesh>
             {[0, 1, 2].map((i) => (
                 <mesh key={i} ref={(m) => void (drops.current[i] = m)} position={[DRIP_AT[0], 2.9, DRIP_AT[2]]}>
@@ -581,7 +581,7 @@ export function QuietScene({ solved, cat }: { solved: boolean; cat: CatSpot }) {
             ].map(([x, y, z, r], i) => (
                 <mesh key={i} position={[x, y, z]} rotation={[0, r, 0]}>
                     <planeGeometry args={[0.6, 0.6]} />
-                    <meshBasicMaterial map={crackTexture(7 + i)} transparent depthWrite={false} />
+                    <meshStandardMaterial map={crackTexture(7 + i)} transparent depthWrite={false} roughness={1} />
                 </mesh>
             ))}
 

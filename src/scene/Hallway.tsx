@@ -20,35 +20,43 @@ const LAMP_INTENSITY = 9;
 const BULB_ON = new Color("#fff2c4");
 const BULB_OFF = new Color("#4a4336");
 
-// A faulty lamp: every few seconds it stutters through a burst of quick on/off flashes.
-// The pattern is planned ahead as a list of [time, on] switches.
+// A tired lamp: every so often it dims a little and recovers, with a faint buzz.
+// Kept deliberately gentle (a small, smooth dip, never off and never rapid flashing) so it
+// is comfortable for people who are sensitive to flicker.
+const DIP = 0.8; // lowest brightness during a dip, as a fraction of normal
+
 function useFlicker(enabled: boolean) {
     const light = useRef<PointLight>(null);
     const bulb = useRef<MeshBasicMaterial>(null);
     const plan = useRef<{ at: number; on: boolean }[]>([]);
-    const next = useRef(3);
+    const next = useRef(6);
+    const level = useRef(1);
+    const target = useRef(1);
 
-    useFrame(({ clock }) => {
+    useFrame(({ clock }, dt) => {
         if (!enabled || !light.current || !bulb.current) return;
         const t = clock.elapsedTime;
         if (plan.current.length === 0 && t > next.current) {
-            // Plan a burst of 3–7 flickers, then wait 4–11 seconds for the next one.
+            // One or two slow dips, then a long wait (10-20 seconds) before the next.
             let at = t;
-            const flips = 3 + Math.floor(Math.random() * 5);
-            for (let i = 0; i < flips; i++) {
+            const dips = 1 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < dips; i++) {
                 plan.current.push({ at, on: false });
-                at += 0.03 + Math.random() * 0.12;
+                at += 0.35 + Math.random() * 0.3;
                 plan.current.push({ at, on: true });
-                at += 0.04 + Math.random() * 0.2;
+                at += 0.5 + Math.random() * 0.5;
             }
-            next.current = at + 4 + Math.random() * 7;
+            next.current = at + 10 + Math.random() * 10;
         }
         while (plan.current.length && plan.current[0].at <= t) {
             const { on } = plan.current.shift()!;
-            light.current.intensity = on ? LAMP_INTENSITY : 0;
-            bulb.current.color.copy(on ? BULB_ON : BULB_OFF);
-            if (!on && useView.getState().mode === "hallway") sounds.buzz();
+            target.current = on ? 1 : DIP;
+            if (!on && useView.getState().mode === "hallway") sounds.buzz(0.3, 0.02);
         }
+        // Ease towards the target brightness rather than jumping.
+        level.current += (target.current - level.current) * Math.min(1, dt * 4);
+        light.current.intensity = LAMP_INTENSITY * level.current;
+        bulb.current.color.copy(BULB_ON).lerp(BULB_OFF, (1 - level.current) / (1 - DIP) * 0.35);
     });
     return { light, bulb };
 }

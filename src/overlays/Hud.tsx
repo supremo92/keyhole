@@ -39,8 +39,8 @@ export function Hud({ shift, onHelp }: { shift: ShiftState | undefined; onHelp: 
                         <small>{roomStatus === "solved" ? "answered" : roomStatus === "waiting" ? "waiting for a reply" : "nothing yet"}</small>
                     </div>
                     <div className="hint top">
-                        Move the mouse to look around. Line things up in the keyhole to read their inventory tags. Move to the bottom of the screen
-                        {roomStatus === "waiting" ? " to go back to the note, or leave." : " to leave."}
+                        Move the mouse to look around, and line things up in the keyhole to read them. Look down at the doormat
+                        {roomStatus === "waiting" ? " to go back to the note or leave" : " to leave"} (or press S).
                     </div>
                 </>
             )}

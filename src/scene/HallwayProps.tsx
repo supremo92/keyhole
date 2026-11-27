@@ -100,8 +100,9 @@ function noticeBoardArt() {
     g.fillStyle = "#9be05a";
     g.fillRect(805, 300, 12, 9);
     g.fillRect(843, 300, 12, 9);
-    paper(330, 480, 380, 200, 0.03, "#ffe8ef", ["NOTICE", "Residents must not be answered", "after the bell. There is no bell."]);
-    paper(760, 520, 300, 170, -0.06, "#eaffea", ["LOST", "One (1) Operator.", "If found, do not return."]);
+    paper(270, 505, 400, 210, 0.03, "#ffe8ef", ["NOTICE", "There is no bell.", "Do not answer the bell.", "Do not look for the bell.", "There is no bell."]);
+    // On its own, clear of the others, so it can be read.
+    paper(745, 540, 300, 150, -0.05, "#eaffea", ["LOST", "One (1) Night Operator.", "If found, do not return."]);
     boardArt = new CanvasTexture(c);
     boardArt.colorSpace = SRGBColorSpace;
     boardArt.anisotropy = 8;
@@ -190,16 +191,19 @@ export function WaitingNote({ shift }: { shift: ShiftState | undefined }) {
     const id: RoomId = waiting?.id ?? "flat";
     const def = roomDef(id);
     const mode = useView((s) => s.mode);
-    // Hidden while you're holding it (or answering it).
-    const shown = !!waiting && (mode === "hallway" || mode === "moving" || mode === "board" || mode === "locker");
+    const atADoor = useView((s) => s.roomId !== null);
+    const sliding = useView((s) => s.slide !== null);
+    // Only lying there while you're out in the corridor: hidden as soon as you go to a door,
+    // pick it up, or a letter is sliding under or out from under a door.
+    const shown = !!waiting && !atADoor && !sliding && (mode === "hallway" || mode === "moving" || mode === "board" || mode === "locker");
     const paper = useRef<Group>(null);
     const glow = useRef<MeshBasicMaterial>(null);
     const arrived = useRef<{ id: RoomId; at: number } | null>(null);
     const { hovered, handlers } = useClickable(() => void openNote(id));
 
     useFrame(({ clock }) => {
-        if (!paper.current || !waiting) return;
-        // A new note slides out from under the door when it first appears.
+        if (!paper.current || !waiting || !shown) return;
+        // A new note slides out from under the door when it first appears (once you can see it).
         if (arrived.current?.id !== id) {
             arrived.current = { id, at: clock.elapsedTime };
             sounds.slide();
@@ -353,11 +357,11 @@ export function CeilingLeak() {
         <group>
             <mesh rotation={[Math.PI / 2, 0, 0.6]} position={[LEAK[0], LEAK[1] - 0.005, LEAK[2]]}>
                 <planeGeometry args={[0.9, 0.9]} />
-                <meshBasicMaterial map={crackTexture(3)} transparent depthWrite={false} />
+                <meshStandardMaterial map={crackTexture(3)} transparent depthWrite={false} roughness={1} />
             </mesh>
             <mesh rotation={[Math.PI / 2, 0, 0]} position={[LEAK[0], LEAK[1] - 0.004, LEAK[2]]}>
                 <planeGeometry args={[1.6, 1.6]} />
-                <meshBasicMaterial map={dampTexture(2)} transparent depthWrite={false} />
+                <meshStandardMaterial map={dampTexture(2)} transparent depthWrite={false} roughness={1} />
             </mesh>
             <mesh ref={drop} position={[LEAK[0], LEAK[1] - 0.04, LEAK[2]]}>
                 <sphereGeometry args={[0.018, 10, 10]} />
@@ -381,7 +385,7 @@ function Decal({ map, position, rotY, size }: { map: CanvasTexture; position: Ve
     return (
         <mesh position={position} rotation={[0, rotY, 0]}>
             <planeGeometry args={size} />
-            <meshBasicMaterial map={map} transparent depthWrite={false} polygonOffset polygonOffsetFactor={-1} />
+            <meshStandardMaterial map={map} transparent depthWrite={false} roughness={1} polygonOffset polygonOffsetFactor={-1} />
         </mesh>
     );
 }
