@@ -6,6 +6,11 @@
   "main": "worker/index.ts",
   // Pins runtime behaviour to this date so platform updates don't change our code silently.
   "compatibility_date": "2026-11-24",
+  // Plain (non-secret) settings. Locally, the same names in .env override these.
+  // BETTER_AUTH_SECRET is a secret: set with `wrangler secret put`, never stored here.
+  "vars": {
+    "BETTER_AUTH_URL": "https://keyhole.joshkingswood.workers.dev"
+  },
   "assets": {
     // Unknown paths return index.html so the React router can handle them.
     "not_found_handling": "single-page-application",

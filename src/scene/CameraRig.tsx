@@ -33,7 +33,6 @@ export function CameraRig() {
         sway.current.y += (state.pointer.y * strength - sway.current.y) * s;
         camera.rotateY(-sway.current.x * 0.75);
         camera.rotateX(sway.current.y * 0.3);
-        if (import.meta.env.DEV) (window as unknown as { __debug: () => unknown }).__debug = () => ({ pos: camera.position.toArray().map((n) => +n.toFixed(2)), look: look.current?.toArray().map((n) => +n.toFixed(2)), sway: sway.current, pointer: [state.pointer.x, state.pointer.y], mode, cam });
     });
 
     return null;
