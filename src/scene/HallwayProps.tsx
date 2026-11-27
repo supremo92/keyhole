@@ -2,13 +2,15 @@ import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useRef, useState, type ReactNode } from "react";
 import { CanvasTexture, SRGBColorSpace, type Group, type Mesh, type MeshBasicMaterial } from "three";
-import type { RoomId, ShiftState } from "../../shared/lexicon";
+import { glyphOf, type RoomId, type ShiftState } from "../../shared/lexicon";
 import { openBoard, openLocker, openNote } from "../lib/flow";
 import { sounds } from "../lib/sound";
 import { useView } from "../stores/view";
 import { Box } from "./Box";
 import { HALL, LOCKER_Z, slotTransform, type Vec3 } from "./layout";
 import { ROOMS, roomDef } from "./rooms";
+import { Cat } from "./Cat";
+import { THE_CAT } from "./catTypes";
 import { crackTexture, dampTexture } from "./textures";
 
 // Hover handlers for things you can click in the hallway (only while in the hallway).
@@ -133,6 +135,26 @@ export function NoticeBoard() {
 
 // ---------------------------------------------------------------- Your locker
 
+// Your name tag, in their script.
+let tagArt: CanvasTexture | null = null;
+function nameTag() {
+    if (tagArt) return tagArt;
+    const c = document.createElement("canvas");
+    c.width = 256;
+    c.height = 92;
+    const g = c.getContext("2d")!;
+    g.fillStyle = "#f3ead2";
+    g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = "#2b2420";
+    g.font = "64px serif";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(glyphOf("operator"), c.width / 2, c.height / 2 + 4);
+    tagArt = new CanvasTexture(c);
+    tagArt.colorSpace = SRGBColorSpace;
+    return tagArt;
+}
+
 export function Locker() {
     const { hovered, handlers } = useClickable(openLocker);
     const grey = "#6f7a80";
@@ -145,10 +167,10 @@ export function Locker() {
                 ))}
                 <Box size={[0.03, 0.18, 0.03]} position={[0.22, 1.0, 0.27]} color="#c9cfd2" metalness={0.8} />
                 {/* Your name tag, in their script. */}
-                <Box size={[0.22, 0.08, 0.005]} position={[0, 1.32, 0.255]} color="#f3ead2" />
-                <Html position={[0, 1.32, 0.26]} center transform scale={0.12} zIndexRange={[4, 0]} pointerEvents="none">
-                    <div className="locker-tag">⍝</div>
-                </Html>
+                <mesh position={[0, 1.32, 0.256]}>
+                    <planeGeometry args={[0.22, 0.08]} />
+                    <meshStandardMaterial map={nameTag()} />
+                </mesh>
                 {/* A dent. Someone kicked it. */}
                 <Box size={[0.12, 0.1, 0.01]} position={[-0.1, 0.45, 0.25]} color="#5d676c" />
             </group>
@@ -416,6 +438,24 @@ export function TannoySpeaker() {
             {[-0.06, 0, 0.06].map((y) => (
                 <Box key={y} size={[0.22, 0.02, 0.01]} position={[0, y, 0.062]} color="#3a342c" />
             ))}
+        </group>
+    );
+}
+
+// The cat, sitting in the corridor when you come out of a room. Staring. Next time it's gone.
+// (Always mounted, just hidden, because its label is a drei Html.)
+const CAT_SPOTS: { pos: Vec3; rot: number }[] = [
+    { pos: [0.9, 0, -1.8], rot: 0.4 },
+    { pos: [-1.2, 0, -6.6], rot: 1.0 },
+    { pos: [0.2, 0, -10.8], rot: 0 },
+];
+
+export function HallCat() {
+    const spot = useView((s) => s.hallCat);
+    const { pos, rot } = CAT_SPOTS[spot ?? 0];
+    return (
+        <group visible={spot !== null}>
+            <Cat mood="stare" coat={THE_CAT} position={pos} rotY={rot} />
         </group>
     );
 }

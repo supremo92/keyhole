@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { glyphOf, type ShiftState } from "../../shared/lexicon";
-import { afterResponse, closeReading } from "../lib/flow";
+import { afterResponse, closeReading, newNight } from "../lib/flow";
 import { sounds } from "../lib/sound";
 import { useView, type Response } from "../stores/view";
 import { GlyphCell } from "./Glyph";
@@ -16,6 +16,11 @@ const useEscape = (fn: () => void) =>
 
 export function ResponseNote({ response }: { response: Response }) {
     const [leaving, setLeaving] = useState(false);
+    // How did your pencilled guesses do, for the words you've just learned?
+    const pencil = useView((s) => s.pencil);
+    const guesses = response.learned
+        .map((word) => ({ word, glyph: glyphOf(word), guess: pencil[glyphOf(word)] }))
+        .filter((g) => g.guess);
     const done = async () => {
         setLeaving(true);
         await new Promise((r) => setTimeout(r, 350));
@@ -40,6 +45,16 @@ export function ResponseNote({ response }: { response: Response }) {
                                 {response.learned.map((w) => (
                                     <span key={w} className="learned-word">
                                         {glyphOf(w)} {w}
+                                    </span>
+                                ))}
+                            </p>
+                        )}
+                        {guesses.length > 0 && (
+                            <p className="desk-learned">
+                                Your pencilled guesses:{" "}
+                                {guesses.map((g) => (
+                                    <span key={g.word} className={g.guess === g.word ? "guess-check right" : "guess-check wrong"}>
+                                        {g.glyph} {g.guess === g.word ? `${g.word} ✓` : `${g.guess} ✗ (it's ${g.word})`}
                                     </span>
                                 ))}
                             </p>
@@ -115,6 +130,15 @@ export function BoardOverlay({ shift }: { shift: ShiftState | undefined }) {
                     <section className="board-pin green">
                         <h3>Tonight</h3>
                         <p>{HINTS[waiting.id]}</p>
+                    </section>
+                )}
+                {shift?.finished && (
+                    <section className="board-pin green">
+                        <h3>Shift complete</h3>
+                        <p>Every resident answered. Come back tomorrow night?</p>
+                        <button className="btn" onClick={() => void newNight()}>
+                            Start a new night
+                        </button>
                     </section>
                 )}
                 <button className="btn board-close" onClick={() => void closeReading()}>
@@ -233,6 +257,9 @@ export function Finale() {
                     The last note said <q>I operator too.</q> Somebody has been answering <em>you</em> all night.
                 </p>
                 <div className="paper-actions intro-actions">
+                    <button className="btn ghost" onClick={() => void newNight()}>
+                        Start a new night
+                    </button>
                     <button className="btn" onClick={() => void closeReading()} autoFocus>
                         Clock off
                     </button>

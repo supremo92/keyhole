@@ -1,40 +1,28 @@
-# The Keyhole
+# The Keyhole: night shift at the Institute of Rooms
 
-**A notes app you can only see through keyholes.**
+**It's your first night shift at the Institute of Rooms. Something lives behind every door. They can only talk by sliding notes under the door, in a script nobody can read. Your job is to answer them.**
 
 Built solo for **Hack Pompey 2026** (theme: *Unusuality*).
 
-**Live:** https://keyhole.joshkingswood.workers.dev
+**Live:** https://keyhole-night.joshkingswood.workers.dev
+*(The earlier notes-app version of The Keyhole is still at https://keyhole.joshkingswood.workers.dev, tagged `v1-notes-app`.)*
 
-Most notes apps try to be efficient. The Keyhole is deliberately odd instead. Your notes live in rooms at the end of a cartoon 3D hallway, and the only way to see them is to peek through the keyhole.
+## How to play
 
-## How it works
+1. **Pick up the note.** A note has been slid out under one of the four doors. It's written in glyphs, one per word. Your Phrasebook knows a few of them; click any symbol you don't know to pencil in a guess.
+2. **Peek through the keyhole.** You're not allowed in, and you never see who lives there: only shadows at the edge of the keyhole and the evidence they leave. But everything in the Institute has an **inventory tag**. Line one up in the keyhole and you can read its glyph.
+3. **Reply in their script.** Build an answer from glyph tiles and slide it back under the door. Behind it, lamplight and the shadow of feet; then their note slides back out. Get it right and the words go into your Phrasebook for good, and the next door's note slides out. Get it wrong and you get a confused mark back.
+4. **Use what's around you.** The **notice board** at the end of the corridor has your duties, the Institute's numerals and a hint for tonight. Your **locker** holds your Phrasebook and staff badge. Crib notes from a previous Operator are lying around the rooms, if the cat isn't sitting on them.
 
-1. **The hallway is your desktop.** Each door is a folder. You start with one door at the end of the corridor.
-2. **Peek.** Click a door. The camera flies up to it and zooms into the keyhole, and you see the room through a fuzzy keyhole shape. Move the mouse to look around.
-3. **Slide a note under the door.** The view pulls back to the door, a sheet of paper appears for you to write on, and then it slides under the gap.
-4. **Peek again.** A random piece of furniture has appeared in the room with your note resting on it: a table, desk, bookshelf, dresser, stool, armchair, piano or crate. Each room has eight furniture spots. After that, notes pile up on the floor.
-5. **Hover a note** to see its title and date. **Click it** and it slides back out from under the door so you can read and edit it. Sliding it back under saves it.
-6. **Add a door.** Click a boarded-up doorway. The planks come off, you name the door, and a new room appears behind it.
+The four rooms each have their own feel: an ordinary flat, a birthday party nobody came to, an office with a leak, and the quiet room.
 
-Every room is decorated at random (wallpaper pattern and colours, carpet, and the number and position of windows). The style is generated on the server when the door is created and saved with it, so a room always looks the same.
+The Institute is falling apart, and it's odd. The light flickers, the ceiling drips into a puddle, the plaster is cracked and damp, the tannoy makes announcements. And things change while you're peeking: you never see it happen, only what's different when you look back. The chair has moved. The notice board has been knocked. Something has been left outside a door. The cat (Employee of the Month, every month) goes wherever it likes.
 
-There's no sign-up. Each visitor gets an anonymous account and a starter door with a few notes already inside.
+## The idea: the Chinese Room
 
-## The idea behind it: the Chinese Room
+The game is built on John Searle's 1980 thought experiment, the **Chinese Room**. A person who knows no Chinese sits in a room with a rulebook. Notes in Chinese are slid under the door, and they answer by matching symbols against the rules. From outside, the room seems to understand Chinese perfectly. Inside, nobody understands a word.
 
-The Keyhole is built around John Searle's 1980 thought experiment, the **Chinese Room**. A person who knows no Chinese sits in a closed room with a rulebook. Notes in Chinese are slid under the door, and the person answers them by matching symbols against the rules and copying out a reply. From outside, the room seems to understand Chinese. Inside, nobody understands a word.
-
-In The Keyhole, behind every door works an **Operator**:
-
-- **They reply.** Every note you slide under the door is answered by a deliberately mindless, numbered Rulebook ([shared/rulebook.ts](shared/rulebook.ts)), applied in the Worker. A question mark gets "Yes." (or "Ask the cat."), food gets "BISCUITS ACKNOWLEDGED. FILED UNDER NOURISHMENT.", numbers get added up "because it seemed important". While they work, lamplight appears under the door and the shadow of their feet walks across. The reply slides back out as a typed memo, and stays stapled to your note.
-- **They file.** Each room has the Operator's desk in the corner, with the open Rulebook. Aim the keyhole at it and click to read the rules, including where each of your notes was filed, written in the building's symbols with your real title pencilled in by someone else.
-- **They can't read.** Note labels appear first in invented symbols, then resolve into words. Notes come out stamped FILED, or sometimes NOT UNDERSTOOD (BUT FILED ANYWAY).
-- **Your turn.** Sometimes a paper slides out from under a boarded-up doorway. Pick it up and you become the Operator: find the matching rule, copy out the reply in symbols, and slide it back. You answer perfectly without understanding anything.
-
-And then there's **the cat**, which may be the only one in the building who understands anything. Each time you peek it's asleep on your notes, staring back at the keyhole, or knocking a note off the furniture while maintaining eye contact. The hallway light flickers.
-
-For demo videos, `?cat=sleep`, `?cat=stare` or `?cat=knock` forces the cat's mood, and `?stray=1` makes a paper appear in the hallway straight away.
+As the Night Operator you're in the same position: symbols come in under a door, and you send symbols back out. The difference is that you can **peek**, so you learn what the words refer to by watching. By the end you can "read" the residents fluently. So: did you understand them, or did you just get very good at the rules? And the last note suggests someone else has been doing exactly the same thing with you.
 
 ## Tech stack
 
@@ -42,36 +30,37 @@ For demo videos, `?cat=sleep`, `?cat=stare` or `?cat=knock` forces the cat's moo
 |---|---|
 | Front end | Vite, React 19, TypeScript |
 | 3D | three.js, @react-three/fiber, @react-three/drei |
-| UI state | zustand (which view you're in: hallway, flying, peeking, writing, reading) |
+| UI state | zustand (where you are: hallway, peeking, holding a note, reading the board...) |
 | Server data | TanStack Query |
 | API | Hono on a Cloudflare Worker |
-| Validation | zod with @hono/zod-validator, schemas shared by the front end and the Worker |
+| Validation | zod with @hono/zod-validator |
 | Database | Cloudflare D1 (SQLite) through Drizzle ORM, with migrations from drizzle-kit |
-| Auth | Better Auth with the anonymous plugin |
+| Auth | Better Auth with the anonymous plugin (no sign-up) |
 | Hosting | Cloudflare Workers with static assets: one `wrangler deploy` ships the app and the API on one domain |
 
 ### Design notes
 
-- **One persistent 3D canvas.** The hallway and rooms live in the same scene, so the camera can fly between them. Rooms are drawn far away from the hallway, and a quick blackout behind the keyhole hides the jump.
-- **The keyhole is a 2D overlay.** It's an SVG mask with a blurred keyhole-shaped hole and a vignette, layered over the canvas. The paper note and its slide-under animation are HTML and CSS.
-- **Everything is drawn in code.** The furniture is built from simple shapes, the wallpaper and floor textures are painted on a `<canvas>`, and the sound effects are generated with the Web Audio API. There are no image or audio files.
-- **Security.** D1 has no row-level security, so every query is filtered by the signed-in user's ID from the session cookie, never from the request. Request bodies are validated with zod.
-- **The server decides.** Room styles, furniture types and which furniture spot a note takes are all chosen in the Worker.
+- **The answers live on the server.** Puzzle definitions and answers are in [worker/puzzles.ts](worker/puzzles.ts). The browser only ever gets glyphs, and the Worker checks every reply. The glyph alphabet itself ([shared/lexicon.ts](shared/lexicon.ts)) is shared, because the front end has to draw it.
+- **The database only stores progress.** Two tables: which rooms you've answered, and which words you've learned. Rooms open one at a time, worked out from what you've solved.
+- **One persistent 3D canvas.** The hallway and rooms live in the same scene, so the camera can fly between them. Rooms are drawn far away and only built while the screen is blacked out behind the keyhole, so nothing stutters.
+- **The keyhole is a 2D overlay**: an SVG mask with a blurred keyhole-shaped hole over the canvas. Notes, the Phrasebook and the notice board are HTML and CSS.
+- **Everything is drawn in code.** Furniture, the cat and the rooms are built from simple shapes; wallpaper, cracks, damp and the night sky are painted on a `<canvas>`; every sound is generated with the Web Audio API. There are no image or audio files.
+- **Security.** D1 has no row-level security, so every query is filtered by the signed-in user's ID from the session cookie, never from the request.
 
 ## Project structure
 
 ```
 src/        React app
-  scene/      3D: Hallway, Door, BoardedDoorway, Room, Furniture, CameraRig, layout, textures
-  overlays/   2D: KeyholeMask, PaperSheet, NamePrompt, Intro, Hud
-  lib/        API hooks, auth client, camera sequences (flow.ts), sound effects
-  stores/     zustand view state
+  scene/      3D: Hallway (+ HallwayProps), Door, Room (+ RoomScenes), Cat, CameraRig, rooms, layout, textures
+  overlays/   2D: KeyholeMask, NoteDesk, Glyph, Readings (reply, notice board, locker, tannoy, finale), Hud, Intro
+  lib/        API hooks, auth client, camera sequences (flow.ts), glyph reader, sound effects
+  stores/     zustand view state (including your pencilled guesses)
 worker/     Cloudflare Worker (Hono)
-  routes/     doors and notes API
+  routes/     shift.ts: progress, replies, reset
+  puzzles.ts  the four residents and their answers
   schemas/    Drizzle tables (Better Auth's tables are generated)
-  lib/        random room styles, starter data, row-to-JSON helpers
   utils/      Better Auth config
-shared/     constants, types and zod schemas used by both sides
+shared/     the glyph lexicon and API types, used by both sides
 drizzle/    generated SQL migrations
 ```
 
@@ -83,11 +72,9 @@ Every route except `/api/health` and `/api/auth/*` needs a session.
 |---|---|---|
 | `GET` | `/api/health` | Checks that the Worker can reach D1 |
 | `*` | `/api/auth/*` | Better Auth (anonymous sign-in, sessions) |
-| `GET` | `/api/doors` | Lists your doors (creates the starter door on your first visit) |
-| `POST` | `/api/doors` | Unboards a doorway: `{ doorSlot, name }` |
-| `GET` | `/api/doors/:doorId/notes` | Lists the notes in a room |
-| `POST` | `/api/doors/:doorId/notes` | Slides a note under the door: `{ title, body }` |
-| `PATCH` | `/api/notes/:noteId` | Edits a note: `{ title, body }` |
+| `GET` | `/api/shift` | Your night so far: each room's status and note, your reply tiles, your Phrasebook |
+| `POST` | `/api/rooms/:roomId/answer` | Slides a reply under a door: `{ reply: [glyphs] }`. Returns whether it was right and the resident's note back |
+| `POST` | `/api/shift/reset` | Starts a new night |
 
 ## Running it locally
 
@@ -119,17 +106,6 @@ npm run dev                # http://localhost:5173
 | `npm run db:studio` | Opens Drizzle Studio on the local database |
 | `npm run deploy` | Builds and deploys to Cloudflare |
 
-### Changing the database
-
-```bash
-# Only if the Better Auth config changes (plugins decide its tables):
-npx auth@latest generate --config ./worker/utils/auth.ts --output ./worker/schemas/auth.ts
-
-npm run db:generate
-npm run db:migrate:local
-npm run db:migrate:remote
-```
-
 ### Deploying
 
 ```bash
@@ -140,10 +116,3 @@ npm run deploy
 ```
 
 `BETTER_AUTH_URL` for production is set in `wrangler.jsonc` under `vars`.
-
-## Ideas for later
-
-- "Claim your building": sign in with GitHub and keep your anonymous notes.
-- Turn around in the hallway to find a second row of doors, or take the stairs to other floors.
-- Deleting notes, plus other things to keep in rooms (links, files, little apps).
-- Proper low-poly models and sound recordings.

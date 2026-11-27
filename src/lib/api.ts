@@ -29,3 +29,10 @@ export function useAnswer() {
         onSuccess: (result) => queryClient.setQueryData(["shift"], result.shift),
     });
 }
+
+// Start a new night from Room 1.
+export const resetShift = async () => {
+    const shift = await request<ShiftState>("/api/shift/reset", { method: "POST" });
+    queryClient.setQueryData(["shift"], shift);
+    return shift;
+};

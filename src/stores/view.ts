@@ -48,6 +48,8 @@ type ViewState = {
     // Odd things that happened while you weren't looking (see flow.aftermath).
     boardTilt: number;
     chairSpot: number;
+    // Where the cat is sitting in the hallway (one of a few spots), if it's out here.
+    hallCat: number | null;
     walkTo: (z: number) => void;
     set: (patch: Partial<Omit<ViewState, "set" | "moveCam" | "walkTo" | "pencilIn">>) => void;
     moveCam: (view: View, instant?: boolean) => void;
@@ -82,6 +84,7 @@ export const useView = create<ViewState>((set, get) => ({
     drafts: {},
     boardTilt: 0,
     chairSpot: 0,
+    hallCat: null,
     walkTo: (z) => {
         if (get().paused) return;
         const hallZ = Math.min(WALK.max, Math.max(WALK.min, z));

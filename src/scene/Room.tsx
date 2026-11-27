@@ -4,7 +4,7 @@ import { useShift } from "../lib/api";
 import { Box } from "./Box";
 import { DoormatIcons } from "./DoormatIcons";
 import { ROOM, ROOM_ORIGIN, type Vec3 } from "./layout";
-import { FlatScene, OfficeScene, PartyScene, QuietScene } from "./RoomScenes";
+import { FlatScene, OfficeScene, PartyScene, QuietScene, type CatSpot } from "./RoomScenes";
 import type { RoomDef } from "./rooms";
 import { carpet, nightSky, wallpaper } from "./textures";
 
@@ -45,9 +45,10 @@ export function Room({ room }: { room: RoomDef }) {
     const status = (id: RoomDef["id"]) => shift?.rooms.find((r) => r.id === id)?.status;
     const solved = status(room.id) === "solved";
     const waiting = status(room.id) === "waiting";
-    // Once it's been asked to move off the cake, the cat wanders: sometimes it's in here.
-    const [catHere] = useState(() => Math.random() < 0.6);
-    const catLoose = status("party") === "solved" && catHere;
+    // Once it's been asked to move off the cake, the cat wanders. On any peek it might be in
+    // here: in its usual spot, or sitting on the crib note so you can only read part of it.
+    const [roll] = useState(() => Math.random());
+    const cat: CatSpot = status("party") !== "solved" ? "none" : roll < 0.3 ? "usual" : roll < 0.6 ? "note" : "none";
 
     const walls = wallpaper(room.wallpaper, room.walls, [ROOM.width / 1.2, ROOM.height / 1.2]);
     const floor = carpet(room.carpet, [3, 3]);
@@ -106,10 +107,10 @@ export function Room({ room }: { room: RoomDef }) {
             )}
 
             <DoormatIcons showNote={waiting} />
-            {room.id === "flat" && <FlatScene solved={solved} catVisits={catLoose} />}
-            {room.id === "party" && <PartyScene solved={solved} />}
-            {room.id === "office" && <OfficeScene solved={solved} catVisits={catLoose} />}
-            {room.id === "quiet" && <QuietScene solved={solved} />}
+            {room.id === "flat" && <FlatScene solved={solved} cat={cat} />}
+            {room.id === "party" && <PartyScene solved={solved} cat={cat} />}
+            {room.id === "office" && <OfficeScene solved={solved} cat={cat} />}
+            {room.id === "quiet" && <QuietScene solved={solved} cat={cat} />}
         </group>
     );
 }

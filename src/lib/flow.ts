@@ -2,7 +2,7 @@ import type { AnswerResult, RoomId } from "../../shared/lexicon";
 import { VIEWS } from "../scene/layout";
 import { roomDef } from "../scene/rooms";
 import { useView } from "../stores/view";
-import { getShift } from "./api";
+import { getShift, resetShift } from "./api";
 import { sounds } from "./sound";
 
 // Scripted camera sequences. Each step waits for the camera to (mostly) arrive.
@@ -92,6 +92,8 @@ export async function leaveRoom() {
 
 // Things change while you're peeking. You never see it happen, only what's different after.
 function aftermath() {
+    // Sometimes the cat is out here when you come back, staring. Next time it's gone.
+    view().set({ hallCat: Math.random() < 0.3 ? Math.floor(Math.random() * 3) : null });
     const roll = Math.random();
     if (roll < 0.3) {
         // Something knocked the notice board.
@@ -151,8 +153,9 @@ export async function sendReply(send: () => Promise<AnswerResult>) {
     sounds.shuffle();
     const [result] = await Promise.all([answer, sleep(2300)]);
     view().set({ processingSince: null });
+    // Pleased knocks; or, for a wrong reply, one of several kinds of disappointment.
     if (result.correct) sounds.knock(3, true);
-    else sounds.knock(1, false);
+    else [() => sounds.knock(1, false), sounds.thud, sounds.sigh][Math.floor(Math.random() * 3)]();
     await sleep(500);
     await slidePaper("out");
     view().set({
@@ -193,6 +196,14 @@ export async function openLocker() {
     view().moveCam(VIEWS.locker);
     await sleep(600);
     view().set({ mode: "locker" });
+}
+
+// Start the night again from Room 1: progress, guesses and drafts all forgotten.
+export async function newNight() {
+    await resetShift();
+    localStorage.removeItem("keyhole-pencil");
+    view().set({ pencil: {}, drafts: {}, hallCat: null, boardTilt: 0 });
+    await toHallway();
 }
 
 export async function closeReading() {

@@ -2,7 +2,7 @@ import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import { CanvasTexture, SRGBColorSpace, type Group, type Mesh, type MeshBasicMaterial, type PointLight } from "three";
-import { glyphOf, type Word } from "../../shared/lexicon";
+import { glyphOf, type RoomId, type Word } from "../../shared/lexicon";
 import { useReader } from "../lib/reader";
 import { useView } from "../stores/view";
 import { Box } from "./Box";
@@ -97,11 +97,15 @@ function NightWindow({ x, y = 1.6, w = 1.4, h = 1.25, open = false, snow = false
             <Box size={[0.08, h, 0.08]} position={[-w / 2, 0, 0.03]} color={frame} />
             <Box size={[0.08, h, 0.08]} position={[w / 2, 0, 0.03]} color={frame} />
             {/* The two casements: shut, or one swung wide open into the room. */}
-            <group position={[w / 2, 0, 0.05]} rotation={[0, open ? -1.2 : 0, 0]}>
-                <Box size={[w / 2, h - 0.06, 0.03]} position={[-w / 4, 0, 0]} color="#9fc4e0" opacity={0.25} />
-                <Box size={[0.04, h - 0.06, 0.04]} position={[-w / 2 + 0.02, 0, 0]} color={frame} />
+            <group position={[w / 2, 0, 0.05]} rotation={[0, open ? -0.8 : 0, 0]}>
+                <Box size={[w / 2, h - 0.06, 0.03]} position={[-w / 4, 0, 0]} color="#cfe6f5" opacity={0.5} />
+                {/* The casement's frame, so it reads clearly as a window swung wide open. */}
+                <Box size={[0.06, h - 0.06, 0.05]} position={[-w / 2 + 0.03, 0, 0]} color={frame} />
+                <Box size={[0.06, h - 0.06, 0.05]} position={[-0.03, 0, 0]} color={frame} />
+                <Box size={[w / 2, 0.06, 0.05]} position={[-w / 4, h / 2 - 0.06, 0]} color={frame} />
+                <Box size={[w / 2, 0.06, 0.05]} position={[-w / 4, -h / 2 + 0.06, 0]} color={frame} />
             </group>
-            <Box size={[w / 2, h - 0.06, 0.03]} position={[-w / 4, 0, 0.05]} color="#9fc4e0" opacity={0.25} />
+            <Box size={[w / 2, h - 0.06, 0.03]} position={[-w / 4, 0, 0.05]} color="#cfe6f5" opacity={0.45} />
             {/* Curtains, flapping in the draught. */}
             {[-1, 1].map((s, i) => (
                 <group key={s} ref={(g) => void (curtains.current[i] = g)} position={[s * (w / 2 + 0.15), h / 2 + 0.1, 0.12]}>
@@ -151,9 +155,53 @@ function Flicker({ position, color, intensity, distance = 4 }: { position: Vec3;
 
 const pick = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
 
+// Where the cat is on this peek: not here, in its usual spot, or sitting on the crib note.
+export type CatSpot = "none" | "usual" | "note";
+
+// Crib notes left by a previous Night Operator. Useful, if you can read past the cat.
+export const CRIB_ID = "crib";
+const CRIBS: Record<RoomId, { full: string; part: string }> = {
+    flat: { full: "Room 1 can't stand a draught. Shut whatever's letting it in.", part: "Room 1 can't st" },
+    party: { full: "Room 2 again: the cat's on the cake. It only moves if you ask it to.", part: "Room 2 again: the c" },
+    office: { full: "Room 3 counts in dots, like dice. Count the scratches on the wall.", part: "Room 3 counts in d" },
+    quiet: { full: "Room 4 will ask who you are. Don't lie. Your badge says what you are.", part: "Room 4 will ask wh" },
+};
+
+function CribNote({ room, position, rotY = 0, covered }: { room: RoomId; position: Vec3; rotY?: number; covered: boolean }) {
+    const aimed = useView((s) => s.mode === "peeking" && s.hoveredId === CRIB_ID);
+    const crib = CRIBS[room];
+    return (
+        <group position={position} rotation={[0, rotY, 0]} userData={{ interactId: CRIB_ID }}>
+            <mesh position={[0, 0.04, 0]}>
+                <boxGeometry args={[0.36, 0.1, 0.42]} />
+                <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+            </mesh>
+            <Box size={[0.2, 0.004, 0.26]} rotation={[0, 0.2, 0]} color="#f6efd8" />
+            {[0.07, 0.03, -0.01, -0.05].map((z, i) => (
+                <Box key={z} size={[0.13 - (i % 2) * 0.04, 0.002, 0.008]} position={[0, 0.003, z]} rotation={[0, 0.2, 0]} color="#5a6a8a" />
+            ))}
+            <Html position={[0, 0.35, 0]} center zIndexRange={[5, 0]} pointerEvents="none">
+                <div className={`note-label crib-label ${aimed ? "show" : ""}`}>
+                    <span className="tag-head">A crib note, in another Operator's handwriting</span>
+                    <strong className="crib-text">
+                        {covered ? (
+                            <>
+                                {crib.part}
+                                <em> ...the cat is sitting on the rest.</em>
+                            </>
+                        ) : (
+                            crib.full
+                        )}
+                    </strong>
+                </div>
+            </Html>
+        </group>
+    );
+}
+
 // ---------------------------------------------------------------- Room 1: the flat
 
-export function FlatScene({ solved, catVisits }: { solved: boolean; catVisits: boolean }) {
+export function FlatScene({ solved, cat }: { solved: boolean; cat: CatSpot }) {
     const blanket = useRef<Group>(null);
     const [mugSpot] = useState(() => pick([0, 1, 2]));
     useFrame(({ clock }) => {
@@ -220,7 +268,9 @@ export function FlatScene({ solved, catVisits }: { solved: boolean; catVisits: b
                 <circleGeometry args={[1.0, 32]} />
                 <meshStandardMaterial color="#9a5a3a" roughness={1} />
             </mesh>
-            {catVisits && <Cat mood="sleep" coat={THE_CAT} position={[-0.4, 0.01, -2.6]} rotY={1.2} />}
+            {cat === "usual" && <Cat mood="sleep" coat={THE_CAT} position={[-0.4, 0.01, -2.6]} rotY={1.2} />}
+            <CribNote room="flat" position={[-1.02, 0.505, -4.08]} covered={cat === "note"} />
+            {cat === "note" && <Cat mood="sleep" coat={THE_CAT} position={[-1.05, 0.51, -4.12]} rotY={0.5} />}
             <Lurker from={[-3.4, 0, -5.4]} to={[-2.2, 0, -6.4]} />
         </group>
     );
@@ -248,7 +298,7 @@ function banner() {
 
 const PARTY = ["#e84a8a", "#4ab0e8", "#f6d34a", "#6cd17a", "#a66ce8"];
 
-export function PartyScene({ solved }: { solved: boolean }) {
+export function PartyScene({ solved, cat }: { solved: boolean; cat: CatSpot }) {
     const ball = useRef<Group>(null);
     const lights = useRef<Group>(null);
     useFrame(({ clock }) => {
@@ -341,6 +391,9 @@ export function PartyScene({ solved }: { solved: boolean }) {
             {/* The cat, asleep on the cake. Until someone asks it to move. */}
             {!solved && <Cat mood="sleep" coat={THE_CAT} position={[0, 1.08, -3.2]} rotY={0.4} interactId={tagId("cat")} />}
             {!solved && <Tag word="cat" position={[0, 0, -3.2]} hit={[0.01, 0.01, 0.01]} tagAt={[-0.3, 1.25, 0.2]} />}
+            <CribNote room="party" position={[0.42, 0.795, -2.95]} rotY={-0.3} covered={solved && cat === "note"} />
+            {solved && cat === "note" && <Cat mood="sleep" coat={THE_CAT} position={[0.42, 0.8, -2.95]} rotY={2} />}
+            {solved && cat === "usual" && <Cat mood="stare" coat={THE_CAT} position={[-0.85, 0.47, -3.4]} rotY={Math.PI / 2} />}
             {/* Presents nobody brought. */}
             <Box size={[0.3, 0.3, 0.3]} position={[-2.3, 0.15, -5.3]} color="#4ab0e8" />
             <Box size={[0.32, 0.04, 0.04]} position={[-2.3, 0.3, -5.3]} color="#f6d34a" />
@@ -354,7 +407,7 @@ export function PartyScene({ solved }: { solved: boolean }) {
 
 const DRIP_AT: Vec3 = [1.6, 0, -3.4];
 
-export function OfficeScene({ solved, catVisits }: { solved: boolean; catVisits: boolean }) {
+export function OfficeScene({ solved, cat }: { solved: boolean; cat: CatSpot }) {
     const chair = useRef<Group>(null);
     const tube = useRef<PointLight>(null);
     const tubeMat = useRef<MeshBasicMaterial>(null);
@@ -366,7 +419,7 @@ export function OfficeScene({ solved, catVisits }: { solved: boolean; catVisits:
         if (chair.current) chair.current.rotation.y += dt * spin * Math.max(0, 1 - t / 40);
         // The strip light can't make up its mind.
         const on = Math.sin(t * 2.1) + Math.sin(t * 17) * 0.4 > -1.1;
-        if (tube.current) tube.current.intensity = on ? 7 : 0.5;
+        if (tube.current) tube.current.intensity = on ? 9 : 2.5;
         if (tubeMat.current) tubeMat.current.color.set(on ? "#f2fff4" : "#56605a");
         drops.current.forEach((d, i) => {
             if (!d) return;
@@ -416,7 +469,9 @@ export function OfficeScene({ solved, catVisits }: { solved: boolean; catVisits:
             {cabinet(-2.65, -1.6)}
             {cabinet(-2.65, -2.3, true)}
             {cabinet(-2.65, -3.0)}
-            {catVisits && <Cat mood="stare" coat={THE_CAT} position={[-2.65, 1.35, -2.3]} rotY={Math.PI / 2} />}
+            {cat === "usual" && <Cat mood="stare" coat={THE_CAT} position={[-2.65, 1.35, -2.3]} rotY={Math.PI / 2} />}
+            <CribNote room="office" position={[-0.32, 0.785, -4.22]} covered={cat === "note"} />
+            {cat === "note" && <Cat mood="sleep" coat={THE_CAT} position={[-0.32, 0.79, -4.25]} rotY={-0.4} />}
 
             {/* The leak: a stain on the ceiling, drips, and a bucket. */}
             <mesh rotation={[Math.PI / 2, 0, 0]} position={[DRIP_AT[0], 2.995, DRIP_AT[2]]}>
@@ -470,7 +525,7 @@ function Shrouded({ position, size, rotY = 0 }: { position: Vec3; size: Vec3; ro
     );
 }
 
-export function QuietScene({ solved }: { solved: boolean }) {
+export function QuietScene({ solved, cat }: { solved: boolean; cat: CatSpot }) {
     return (
         <group>
             {/* A candle on the floor: the only light. */}
@@ -487,6 +542,8 @@ export function QuietScene({ solved }: { solved: boolean }) {
             </group>
             <Tag word="light" position={[0.4, 0, -2.6]} hit={[0.3, 0.35, 0.3]} hitAt={[0, 0.15, 0]} tagAt={[0.15, 0.3, 0.05]} />
 
+            <CribNote room="quiet" position={[0.8, 0.006, -2.25]} rotY={0.5} covered={cat === "note"} />
+            {cat === "note" && <Cat mood="stare" coat={THE_CAT} position={[0.8, 0.01, -2.3]} rotY={0.1} />}
             {/* Furniture under dust sheets. */}
             <Shrouded position={[-1.8, 0, -4.6]} size={[1.2, 0.8, 0.7]} rotY={0.2} />
             <Shrouded position={[1.9, 0, -4.9]} size={[0.8, 1.5, 0.5]} rotY={-0.3} />

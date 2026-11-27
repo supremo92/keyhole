@@ -8,7 +8,7 @@ import type { ShiftState } from "../../shared/lexicon";
 import { BoardedDoorway } from "./BoardedDoorway";
 import { Box } from "./Box";
 import { Door } from "./Door";
-import { CeilingLeak, Gifts, HallChair, Locker, NoticeBoard, TannoySpeaker, WaitingNote, WallDecay } from "./HallwayProps";
+import { CeilingLeak, Gifts, HallCat, HallChair, Locker, NoticeBoard, TannoySpeaker, WaitingNote, WallDecay } from "./HallwayProps";
 import { ROOMS } from "./rooms";
 import { HALL } from "./layout";
 import { wallpaper, woodFloor } from "./textures";
@@ -192,6 +192,7 @@ export function Hallway({ shift }: { shift: ShiftState | undefined }) {
             <CeilingLeak />
             <WallDecay />
             <HallChair />
+            <HallCat />
             <TannoySpeaker />
         </group>
     );

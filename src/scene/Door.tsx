@@ -1,10 +1,30 @@
-import { Html } from "@react-three/drei";
 import { useState } from "react";
+import { CanvasTexture, SRGBColorSpace } from "three";
 import type { RoomDef } from "./rooms";
 import { peek } from "../lib/flow";
 import { useView } from "../stores/view";
 import { Box } from "./Box";
 import { KEYHOLE, slotTransform } from "./layout";
+
+// The number, engraved on the plate.
+const plates = new Map<string, CanvasTexture>();
+function plateArt(text: string) {
+    const cached = plates.get(text);
+    if (cached) return cached;
+    const c = document.createElement("canvas");
+    c.width = 128;
+    c.height = 84;
+    const g = c.getContext("2d")!;
+    g.fillStyle = "#2b2010";
+    g.font = "bold 64px Georgia, serif";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(text, c.width / 2, c.height / 2 + 4);
+    const tex = new CanvasTexture(c);
+    tex.colorSpace = SRGBColorSpace;
+    plates.set(text, tex);
+    return tex;
+}
 
 export function DoorFrame({ color = "#3b2a1c" }: { color?: string }) {
     return (
@@ -66,10 +86,18 @@ export function Door({ room }: { room: RoomDef }) {
                     <meshBasicMaterial color="#050302" polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} />
                 </mesh>
             </group>
-            <Html position={[0, 2.5, 0.1]} center zIndexRange={[5, 0]} pointerEvents="none">
-                {/* Room 3's number hangs by one nail. */}
-                <div className={`door-plaque ${hovered ? "hovered" : ""} ${active ? "show" : ""} ${room.id === "office" ? "askew" : ""}`}>{room.plate}</div>
-            </Html>
+            {/* A brass number sign on a bracket sticking straight out from the wall, turned to
+                face along the corridor so it can be read from either end. Room 3's hangs crooked. */}
+            <Box size={[0.025, 0.025, 0.3]} position={[0.75, 2.62, 0.15]} color="#3a2a1a" />
+            <group position={[0.75, 2.6, 0.27]} rotation={[0, Math.PI / 2, room.id === "office" ? 0.5 : 0]}>
+                <Box size={[0.36, 0.27, 0.03]} position={[0, -0.15, 0]} color="#b8923a" metalness={0.6} roughness={0.35} emissive={hovered && active ? "#4a3a10" : "#000000"} />
+                {[1, -1].map((side) => (
+                    <mesh key={side} position={[0, -0.15, side * 0.016]} rotation={[0, side > 0 ? 0 : Math.PI, 0]}>
+                        <planeGeometry args={[0.32, 0.23]} />
+                        <meshStandardMaterial map={plateArt(room.plate)} metalness={0.4} roughness={0.4} transparent />
+                    </mesh>
+                ))}
+            </group>
         </group>
     );
 }

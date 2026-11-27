@@ -56,7 +56,7 @@ export const PUZZLES: Puzzle[] = [
     },
 ];
 
-// A wrong reply gets this back.
-export const CONFUSED: Word[] = ["?"];
+// A wrong reply gets one of these back.
+export const CONFUSED: Word[][] = [["?"], ["?", "?"], ["no"], ["?", "no", "?"], ["no", "no"]];
 
 export const toGlyphs = (words: Word[]) => words.map(glyphOf);

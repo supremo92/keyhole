@@ -43,6 +43,15 @@ const answerSchema = z.object({ reply: z.array(z.string().max(8)).min(1).max(8) 
 export const shiftRoutes = new Hono<AppEnv>()
     .get("/shift", async (c) => c.json(await loadShift(c.get("db"), c.get("user").id)))
 
+    // Start a new night: forget everything this player has solved and learned.
+    .post("/shift/reset", async (c) => {
+        const db = c.get("db");
+        const userId = c.get("user").id;
+        await db.delete(solvedRooms).where(eq(solvedRooms.userId, userId));
+        await db.delete(learnedWords).where(eq(learnedWords.userId, userId));
+        return c.json(await loadShift(db, userId));
+    })
+
     // Slide a reply under a door. Only the room currently waiting can be answered.
     .post("/rooms/:roomId/answer", zValidator("json", answerSchema), async (c) => {
         const db = c.get("db");
@@ -66,7 +75,7 @@ export const shiftRoutes = new Hono<AppEnv>()
         }
         const result: AnswerResult = {
             correct,
-            response: toGlyphs(correct ? puzzle.response : CONFUSED),
+            response: toGlyphs(correct ? puzzle.response : CONFUSED[Math.floor(Math.random() * CONFUSED.length)]),
             learned: correct ? puzzle.learns : [],
             shift: correct ? await loadShift(db, userId) : before,
         };

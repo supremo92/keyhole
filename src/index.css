@@ -1256,3 +1256,35 @@ body,
 .finale p {
     line-height: 1.5;
 }
+
+.guess-check {
+    display: inline-block;
+    margin: 2px 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+}
+.guess-check.right {
+    background: #dff3d8;
+    color: #2e6b2a;
+}
+.guess-check.wrong {
+    background: #f6dcdc;
+    color: #7a1f1f;
+}
+.finale .paper-actions {
+    justify-content: space-between;
+}
+
+.crib-label {
+    max-width: 260px;
+    white-space: normal;
+    text-align: center;
+}
+.crib-text {
+    font-size: 14px !important;
+    font-weight: normal;
+}
+.crib-text em {
+    opacity: 0.6;
+}
