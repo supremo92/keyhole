@@ -1,6 +1,17 @@
 // Tiny synthesised sound effects (no audio files needed).
 let ctx: AudioContext | null = null;
 
+// Start the audio engine early (while the page loads) so the first sound never stalls a
+// frame. Browsers keep it paused until the first click or key press, so resume it then.
+export function warmUpAudio() {
+    ctx ??= new AudioContext();
+    const resume = () => {
+        if (ctx?.state === "suspended") void ctx.resume();
+    };
+    window.addEventListener("pointerdown", resume, { once: true, capture: true });
+    window.addEventListener("keydown", resume, { once: true, capture: true });
+}
+
 function audio() {
     ctx ??= new AudioContext();
     if (ctx.state === "suspended") void ctx.resume();

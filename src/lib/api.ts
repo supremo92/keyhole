@@ -17,12 +17,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const useDoors = (enabled: boolean) =>
     useQuery({ queryKey: ["doors"], queryFn: () => request<Door[]>("/api/doors"), enabled });
 
-export const useNotes = (doorId: string | null) =>
-    useQuery({
-        queryKey: ["notes", doorId],
-        queryFn: () => request<Note[]>(`/api/doors/${doorId}/notes`),
-        enabled: !!doorId,
-    });
+// Shared by the hook and by prefetching when you click a door.
+export const notesQuery = (doorId: string | null) => ({
+    queryKey: ["notes", doorId],
+    queryFn: () => request<Note[]>(`/api/doors/${doorId}/notes`),
+});
+
+export const useNotes = (doorId: string | null) => useQuery({ ...notesQuery(doorId), enabled: !!doorId });
 
 export function useCreateDoor() {
     const qc = useQueryClient();

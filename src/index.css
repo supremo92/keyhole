@@ -246,7 +246,11 @@ body,
     animation: paper-from-under 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.05);
 }
 .paper-out {
-    animation: paper-under 0.9s cubic-bezier(0.6, 0, 0.8, 0.4) forwards;
+    animation: paper-under 0.45s cubic-bezier(0.55, 0, 0.9, 0.5) forwards;
+}
+.paper-stage.leaving {
+    background: transparent;
+    transition: background 0.3s;
 }
 @keyframes paper-up {
     from {
@@ -259,13 +263,11 @@ body,
         opacity: 0.3;
     }
 }
+/* Put down: the paper tips forward and drops to the floor, out of view. */
 @keyframes paper-under {
-    40% {
-        transform: translateY(20vh) rotateX(50deg) scale(0.8);
-    }
     to {
-        transform: translateY(80vh) rotateX(82deg) scale(0.45);
-        opacity: 0;
+        transform: translateY(85vh) rotateX(70deg) scale(0.6);
+        opacity: 0.6;
     }
 }
 

@@ -1,9 +1,11 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useDoors, useNotes } from "./lib/api";
 import { ensureSession } from "./lib/auth-client";
+import { queryClient } from "./lib/queryClient";
+import { warmUpAudio } from "./lib/sound";
 import { leaveRoom } from "./lib/flow";
 import { Hud } from "./overlays/Hud";
 import { Intro } from "./overlays/Intro";
@@ -16,11 +18,11 @@ import { Walker } from "./scene/Walker";
 import { Hallway } from "./scene/Hallway";
 import { VIEWS, WALK } from "./scene/layout";
 import { Room } from "./scene/Room";
+import { SlidingPaper } from "./scene/SlidingPaper";
 import { useView } from "./stores/view";
 
 const INTRO_KEY = "keyhole-intro-seen";
 
-const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } } });
 
 export default function App() {
     return (
@@ -33,8 +35,8 @@ export default function App() {
 function Keyhole() {
     const [auth, setAuth] = useState<"pending" | "ready" | "error">("pending");
     const appRef = useRef<HTMLDivElement>(null);
-    const { mode, doorId, doorSlot, noteId, blackout, keyhole } = useView(
-        useShallow((s) => ({ mode: s.mode, doorId: s.doorId, doorSlot: s.doorSlot, noteId: s.noteId, blackout: s.blackout, keyhole: s.keyhole })),
+    const { mode, doorId, doorSlot, noteId, blackout, keyhole, roomId } = useView(
+        useShallow((s) => ({ mode: s.mode, doorId: s.doorId, doorSlot: s.doorSlot, noteId: s.noteId, blackout: s.blackout, keyhole: s.keyhole, roomId: s.roomId })),
     );
     const aimed = useView((s) => s.mode === "peeking" && s.hoveredId !== null);
     const doormat = useView((s) => s.doormat);
@@ -55,6 +57,7 @@ function Keyhole() {
     };
 
     useEffect(() => {
+        warmUpAudio();
         ensureSession()
             .then(() => setAuth("ready"))
             .catch(() => setAuth("error"));
@@ -89,7 +92,8 @@ function Keyhole() {
                     <Walker />
                     <KeyholeAim />
                     {doors.data && <Hallway doors={doors.data} />}
-                    {door && <Room door={door} />}
+                    {door && roomId === door.id && <Room door={door} />}
+                    <SlidingPaper />
                 </Canvas>
             </div>
 

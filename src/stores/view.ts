@@ -8,10 +8,16 @@ export type Mode = "hallway" | "moving" | "peeking" | "writing" | "reading" | "n
 
 type CamTarget = View & { instant: boolean; seq: number };
 
+// A sheet of paper sliding across the hallway floor under (in) or out from under the door.
+export type Slide = { direction: "in" | "out"; colour: string; startedAt: number };
+
 type ViewState = {
     mode: Mode;
     doorId: string | null;
     doorSlot: number | null;
+    // The room actually drawn (set once the screen is blacked out, see flow.intoRoom).
+    roomId: string | null;
+    slide: Slide | null;
     noteId: string | null;
     unboarding: number | null;
     blackout: boolean;
@@ -33,6 +39,8 @@ export const useView = create<ViewState>((set, get) => ({
     mode: "hallway",
     doorId: null,
     doorSlot: null,
+    roomId: null,
+    slide: null,
     noteId: null,
     unboarding: null,
     blackout: false,

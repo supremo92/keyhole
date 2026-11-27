@@ -41,8 +41,8 @@ export function Door({ door }: { door: DoorData }) {
                 }}
             >
                 <Box
-                    size={[1.1, 2.2, 0.06]}
-                    position={[0, 1.1, 0.03]}
+                    size={[1.1, 2.16, 0.06]}
+                    position={[0, 1.12, 0.03]}
                     color={door.colour}
                     emissive={hovered && active ? "#2a2010" : "#000000"}
                 />

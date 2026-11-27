@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { LIMITS } from "../../shared/constants";
 import type { Note } from "../../shared/types";
 import { useCreateNote, useUpdateNote } from "../lib/api";
-import { backToRoom } from "../lib/flow";
+import { backToRoom, slideUnderDoor } from "../lib/flow";
 import { sounds } from "../lib/sound";
 
 type Props = { mode: "write"; doorId: string } | { mode: "read"; doorId: string; note: Note };
@@ -22,9 +22,20 @@ export function PaperSheet(props: Props) {
     const busy = phase === "out" || createNote.isPending || updateNote.isPending;
 
     useEffect(() => {
-        sounds.slide();
-        if (props.mode === "write") titleRef.current?.focus();
+        // Reading: the sliding-out sound already played as the paper came out from under the door.
+        if (props.mode === "write") {
+            sounds.slide();
+            titleRef.current?.focus();
+        }
     }, [props.mode]);
+
+    // Put the paper down on the floor (it drops out of view), then slide it under the door.
+    async function putDownAndSlide() {
+        setPhase("out");
+        await sleep(450);
+        await slideUnderDoor(existing?.colour);
+        await backToRoom();
+    }
 
     async function slideUnder() {
         if (!title.trim()) {
@@ -40,23 +51,22 @@ export function PaperSheet(props: Props) {
                   ? updateNote.mutateAsync({ id: existing.id, title, body })
                   : createNote.mutateAsync({ doorId: props.doorId, title, body });
             await save;
-            setPhase("out");
-            sounds.slide();
-            await sleep(900);
-            await backToRoom();
+            await putDownAndSlide();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Couldn't save the note.");
         }
     }
 
     async function giveUp() {
+        // A note that was taken out goes back under the door; a new one is just dropped.
+        if (existing) return putDownAndSlide();
         setPhase("out");
-        await sleep(500);
+        await sleep(450);
         await backToRoom();
     }
 
     return (
-        <div className="paper-stage">
+        <div className={`paper-stage ${phase === "out" ? "leaving" : ""}`}>
             <form
                 className={`paper paper-${phase} ${existing ? "from-under" : ""}`}
                 style={{ background: existing?.colour ?? "#fffdf3" }}
