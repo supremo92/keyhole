@@ -14,7 +14,7 @@ export function Intro({ onClose }: { onClose: () => void }) {
                         furniture.
                     </li>
                     <li>
-                        <strong>Line up a note in the keyhole</strong> to read its label, and click to slide it back out and edit it. The arrow on the floor takes you back.
+                        <strong>Line up a note in the keyhole</strong> to read its label, and click to slide it back out and edit it. At the bottom of the screen, the arrow on the floor takes you back and the letter writes a new note.
                     </li>
                     <li>
                         <strong>Boarded-up doorways</strong> can be pried open to make a new door.

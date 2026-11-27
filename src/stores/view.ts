@@ -22,6 +22,8 @@ type ViewState = {
     hoveredId: string | null;
     // A modal (the intro card) is open over the hallway: no walking.
     paused: boolean;
+    // Peeking and looking down at the doormat icons (pointer visible).
+    doormat: boolean;
     walkTo: (z: number) => void;
     set: (patch: Partial<Omit<ViewState, "set" | "moveCam" | "walkTo">>) => void;
     moveCam: (view: View, instant?: boolean) => void;
@@ -39,6 +41,7 @@ export const useView = create<ViewState>((set, get) => ({
     hallZ: WALK.start,
     hoveredId: null,
     paused: false,
+    doormat: false,
     walkTo: (z) => {
         if (get().paused) return;
         const hallZ = Math.min(WALK.max, Math.max(WALK.min, z));

@@ -37,6 +37,7 @@ function Keyhole() {
         useShallow((s) => ({ mode: s.mode, doorId: s.doorId, doorSlot: s.doorSlot, noteId: s.noteId, blackout: s.blackout, keyhole: s.keyhole })),
     );
     const aimed = useView((s) => s.mode === "peeking" && s.hoveredId !== null);
+    const doormat = useView((s) => s.doormat);
     const doors = useDoors(auth === "ready");
     const door = doors.data?.find((d) => d.id === doorId);
     const notes = useNotes(doorId);
@@ -92,7 +93,7 @@ function Keyhole() {
                 </Canvas>
             </div>
 
-            <KeyholeMask open={keyhole} aimed={aimed} />
+            <KeyholeMask open={keyhole} aimed={aimed} showRing={!doormat} />
             <Hud door={door} notes={notes.data} onHelp={() => setShowIntro(true)} />
 
             {mode === "writing" && door && <PaperSheet mode="write" doorId={door.id} />}

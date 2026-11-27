@@ -1,5 +1,5 @@
 // A black screen with a fuzzy keyhole-shaped hole in it, drawn over the canvas.
-export function KeyholeMask({ open, aimed }: { open: boolean; aimed: boolean }) {
+export function KeyholeMask({ open, aimed, showRing }: { open: boolean; aimed: boolean; showRing: boolean }) {
     return (
         <svg
             className={`keyhole ${open ? "open" : ""}`}
@@ -26,7 +26,7 @@ export function KeyholeMask({ open, aimed }: { open: boolean; aimed: boolean }) 
             <rect x="-2000" y="-2000" width="4000" height="4000" fill="url(#keyhole-vignette)" />
             <rect x="-2000" y="-2000" width="4000" height="4000" fill="#050302" mask="url(#keyhole-mask)" />
             {/* A faint aiming ring in the middle of the keyhole. */}
-            <g className="keyhole-shape">
+            <g className="keyhole-shape" opacity={showRing ? 1 : 0}>
                 {/* Lights up when it is lined up with something you can click. */}
                 <circle
                     cx="0"

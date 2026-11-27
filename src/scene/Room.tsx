@@ -1,12 +1,10 @@
 import { Html } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
-import { Shape, type MeshBasicMaterial } from "three";
 import { MAX_FURNITURE_SLOTS, type Wall, type WindowSpec } from "../../shared/constants";
 import type { Door, Note } from "../../shared/types";
 import { useNotes } from "../lib/api";
 import { useView } from "../stores/view";
 import { Box } from "./Box";
+import { DoormatIcons } from "./DoormatIcons";
 import { Furniture, NOTE_SPOT } from "./Furniture";
 import { OUTLINE_AIMED, OUTLINE_IDLE, OutlineContext } from "./outline";
 import { ROOM, ROOM_ORIGIN, type Vec3 } from "./layout";
@@ -63,8 +61,7 @@ function RoomWindow({ spec }: { spec: WindowSpec }) {
     );
 }
 
-// Things the keyhole can be aimed at carry this in userData (see KeyholeAim).
-export const EXIT_ID = "exit";
+// Things the keyhole can be aimed at carry { interactId } in userData (see KeyholeAim).
 
 function NoteLabel({ note, show }: { note: Note; show: boolean }) {
     const date = new Date(note.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
@@ -123,42 +120,6 @@ function Placed({ note }: { note: Note }) {
     );
 }
 
-// A glowing arrow on the floor just inside the door: aim at it and click to leave.
-const arrowShape = (() => {
-    const s = new Shape();
-    s.moveTo(0, 0.42);
-    s.lineTo(0.3, 0.08);
-    s.lineTo(0.12, 0.08);
-    s.lineTo(0.12, -0.32);
-    s.lineTo(-0.12, -0.32);
-    s.lineTo(-0.12, 0.08);
-    s.lineTo(-0.3, 0.08);
-    s.closePath();
-    return s;
-})();
-
-function ExitArrow() {
-    const aimed = useView((s) => s.mode === "peeking" && s.hoveredId === EXIT_ID);
-    const material = useRef<MeshBasicMaterial>(null);
-    useFrame(({ clock }) => {
-        if (material.current) material.current.opacity = aimed ? 1 : 0.55 + Math.sin(clock.elapsedTime * 3) * 0.25;
-    });
-    return (
-        <group position={[0, 0.015, -1.5]} userData={{ interactId: EXIT_ID }}>
-            {/* Lying flat, pointing back towards the door. */}
-            <mesh rotation={[-Math.PI / 2, 0, Math.PI]} scale={aimed ? 1.15 : 1}>
-                <shapeGeometry args={[arrowShape]} />
-                <meshBasicMaterial ref={material} color={aimed ? "#fff3b0" : "#f3d27a"} transparent />
-            </mesh>
-            <Html position={[0, 0.25, 0]} center zIndexRange={[5, 0]} pointerEvents="none">
-                <div className={`note-label ${aimed ? "show" : ""}`}>
-                    <strong>Back to the hallway</strong>
-                </div>
-            </Html>
-        </group>
-    );
-}
-
 export function Room({ door }: { door: Door }) {
     const { data: notes = [] } = useNotes(door.id);
     const walls = wallpaper(door.wallpaper, door.wallColours, [ROOM.width / 1.2, ROOM.height / 1.2]);
@@ -207,7 +168,7 @@ export function Room({ door }: { door: Door }) {
             </mesh>
             <pointLight position={[0, ROOM.height - 0.4, -D / 2]} intensity={20} distance={14} decay={1.4} color="#ffe6bd" castShadow />
 
-            <ExitArrow />
+            <DoormatIcons />
             {notes.map((n) => (
                 <Placed key={n.id} note={n} />
             ))}

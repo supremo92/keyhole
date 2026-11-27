@@ -94,6 +94,11 @@ body,
     pointer-events: none;
 }
 
+.hint.top {
+    top: 64px;
+    bottom: auto;
+}
+
 .room-name {
     position: absolute;
     top: 18px;
@@ -111,16 +116,6 @@ body,
     font-size: 13px;
     color: #f6ead0;
     opacity: 0.8;
-}
-
-.room-actions {
-    position: absolute;
-    bottom: 70px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 20;
-    display: flex;
-    gap: 12px;
 }
 
 .btn {

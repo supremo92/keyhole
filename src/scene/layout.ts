@@ -13,6 +13,18 @@ export const KEYHOLE: Vec3 = [0.4, 0.865, 0];
 // Matches the circle in KeyholeMask (cy=-14 in a 100-unit-tall viewBox).
 export const AIM_NDC: [number, number] = [0, 0.28];
 
+// While peeking, moving the mouse into the bottom strip of the screen (pixels) tilts the
+// view down to the doormat icons and shows the pointer. It stays there until the mouse
+// goes back above DOORMAT_EXIT, so the icons can sit comfortably above the strip.
+export const DOORMAT_ZONE = 150;
+export const DOORMAT_EXIT = 400;
+// Extra downward tilt (radians) when looking at the doormat.
+export const DOORMAT_PITCH = -0.38;
+
+// Ids of the clickable things in a room that aren't notes.
+export const EXIT_ID = "exit";
+export const WRITE_ID = "write";
+
 // Rooms are drawn far away from the hallway; the keyhole hides the jump.
 export const ROOM_ORIGIN: Vec3 = [100, 0, 0];
 export const ROOM = { width: 6, depth: 6, height: 3 };

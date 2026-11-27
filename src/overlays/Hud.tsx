@@ -1,5 +1,4 @@
 import type { Door, Note } from "../../shared/types";
-import { startWriting } from "../lib/flow";
 import { useView } from "../stores/view";
 
 export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: Note[] | undefined; onHelp: () => void }) {
@@ -31,15 +30,10 @@ export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: No
                             {notes?.length ?? 0} note{notes?.length === 1 ? "" : "s"}
                         </small>
                     </div>
-                    <div className="hint">
+                    <div className="hint top">
                         {notes?.length
-                            ? "Point the mouse to look around. Line something up in the keyhole and click to take its note out. Look down at the arrow to leave."
-                            : "An empty room. Slide a note under the door and something will turn up. Look down at the arrow to leave."}
-                    </div>
-                    <div className="room-actions">
-                        <button className="btn" onClick={() => void startWriting()}>
-                            ✎ Slide a note under the door
-                        </button>
+                            ? "Move the mouse to look around. Line something up in the keyhole and click to take its note out. Move to the bottom of the screen to write a note or leave."
+                            : "An empty room. Move to the bottom of the screen and click the letter to slide a note under the door."}
                     </div>
                 </>
             )}
