@@ -5,6 +5,7 @@ import { useDoors, useNotes } from "./lib/api";
 import { ensureSession } from "./lib/auth-client";
 import { leaveRoom } from "./lib/flow";
 import { Hud } from "./overlays/Hud";
+import { Intro } from "./overlays/Intro";
 import { KeyholeMask } from "./overlays/KeyholeMask";
 import { NamePrompt } from "./overlays/NamePrompt";
 import { PaperSheet } from "./overlays/PaperSheet";
@@ -13,6 +14,8 @@ import { Hallway } from "./scene/Hallway";
 import { VIEWS } from "./scene/layout";
 import { Room } from "./scene/Room";
 import { useView } from "./stores/view";
+
+const INTRO_KEY = "keyhole-intro-seen";
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } } });
 
@@ -32,6 +35,12 @@ function Keyhole() {
     const door = doors.data?.find((d) => d.id === doorId);
     const notes = useNotes(doorId);
     const note = notes.data?.find((n) => n.id === noteId);
+    const [showIntro, setShowIntro] = useState(() => !localStorage.getItem(INTRO_KEY));
+
+    const closeIntro = () => {
+        localStorage.setItem(INTRO_KEY, "1");
+        setShowIntro(false);
+    };
 
     useEffect(() => {
         ensureSession()
@@ -73,11 +82,12 @@ function Keyhole() {
             </div>
 
             <KeyholeMask open={keyhole} />
-            <Hud door={door} notes={notes.data} />
+            <Hud door={door} notes={notes.data} onHelp={() => setShowIntro(true)} />
 
             {mode === "writing" && door && <PaperSheet mode="write" doorId={door.id} />}
             {mode === "reading" && door && note && <PaperSheet key={note.id} mode="read" doorId={door.id} note={note} />}
             {mode === "naming" && doorSlot !== null && <NamePrompt slot={doorSlot} />}
+            {showIntro && !loading && mode === "hallway" && <Intro onClose={closeIntro} />}
 
             <div className={`blackout ${blackout ? "on" : ""}`} />
             {(loading || failed) && (

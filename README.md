@@ -1,37 +1,134 @@
-<!-- # React + TypeScript + Vite
+# The Keyhole
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+**A notes app you can only see through keyholes.**
 
-Currently, two official plugins are available:
+Built solo for **Hack Pompey 2026** (theme: *Unusuality*).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Live:** https://keyhole.joshkingswood.workers.dev
 
-## React Compiler
+Most notes apps try to be efficient. The Keyhole is deliberately odd instead. Your notes live in rooms at the end of a cartoon 3D hallway, and the only way to see them is to peek through the keyhole.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## How it works
 
-## Expanding the Oxlint configuration
+1. **The hallway is your desktop.** Each door is a folder. You start with one door at the end of the corridor.
+2. **Peek.** Click a door. The camera flies up to it and zooms into the keyhole, and you see the room through a fuzzy keyhole shape. Move the mouse to look around.
+3. **Slide a note under the door.** The view pulls back to the door, a sheet of paper appears for you to write on, and then it slides under the gap.
+4. **Peek again.** A random piece of furniture has appeared in the room with your note resting on it: a table, desk, bookshelf, dresser, stool, armchair, piano or crate. Each room has eight furniture spots. After that, notes pile up on the floor.
+5. **Hover a note** to see its title and date. **Click it** and it slides back out from under the door so you can read and edit it. Sliding it back under saves it.
+6. **Add a door.** Click a boarded-up doorway. The planks come off, you name the door, and a new room appears behind it.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+Every room is decorated at random (wallpaper pattern and colours, carpet, and the number and position of windows). The style is generated on the server when the door is created and saved with it, so a room always looks the same.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+There's no sign-up. Each visitor gets an anonymous account and a starter door with a few notes already inside.
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Front end | Vite, React 19, TypeScript |
+| 3D | three.js, @react-three/fiber, @react-three/drei |
+| UI state | zustand (which view you're in: hallway, flying, peeking, writing, reading) |
+| Server data | TanStack Query |
+| API | Hono on a Cloudflare Worker |
+| Validation | zod with @hono/zod-validator, schemas shared by the front end and the Worker |
+| Database | Cloudflare D1 (SQLite) through Drizzle ORM, with migrations from drizzle-kit |
+| Auth | Better Auth with the anonymous plugin |
+| Hosting | Cloudflare Workers with static assets: one `wrangler deploy` ships the app and the API on one domain |
+
+### Design notes
+
+- **One persistent 3D canvas.** The hallway and rooms live in the same scene, so the camera can fly between them. Rooms are drawn far away from the hallway, and a quick blackout behind the keyhole hides the jump.
+- **The keyhole is a 2D overlay.** It's an SVG mask with a blurred keyhole-shaped hole and a vignette, layered over the canvas. The paper note and its slide-under animation are HTML and CSS.
+- **Everything is drawn in code.** The furniture is built from simple shapes, the wallpaper and floor textures are painted on a `<canvas>`, and the sound effects are generated with the Web Audio API. There are no image or audio files.
+- **Security.** D1 has no row-level security, so every query is filtered by the signed-in user's ID from the session cookie, never from the request. Request bodies are validated with zod.
+- **The server decides.** Room styles, furniture types and which furniture spot a note takes are all chosen in the Worker.
+
+## Project structure
+
+```
+src/        React app
+  scene/      3D: Hallway, Door, BoardedDoorway, Room, Furniture, CameraRig, layout, textures
+  overlays/   2D: KeyholeMask, PaperSheet, NamePrompt, Intro, Hud
+  lib/        API hooks, auth client, camera sequences (flow.ts), sound effects
+  stores/     zustand view state
+worker/     Cloudflare Worker (Hono)
+  routes/     doors and notes API
+  schemas/    Drizzle tables (Better Auth's tables are generated)
+  lib/        random room styles, starter data, row-to-JSON helpers
+  utils/      Better Auth config
+shared/     constants, types and zod schemas used by both sides
+drizzle/    generated SQL migrations
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories. -->
-# Keyhole Notes App
-A basic app that allows storage of notes, with an "unusual" interface.
+## API
 
-## Log
-+Installed betterAuth
+Every route except `/api/health` and `/api/auth/*` needs a session.
+
+| Method | Route | What it does |
+|---|---|---|
+| `GET` | `/api/health` | Checks that the Worker can reach D1 |
+| `*` | `/api/auth/*` | Better Auth (anonymous sign-in, sessions) |
+| `GET` | `/api/doors` | Lists your doors (creates the starter door on your first visit) |
+| `POST` | `/api/doors` | Unboards a doorway: `{ doorSlot, name }` |
+| `GET` | `/api/doors/:doorId/notes` | Lists the notes in a room |
+| `POST` | `/api/doors/:doorId/notes` | Slides a note under the door: `{ title, body }` |
+| `PATCH` | `/api/notes/:noteId` | Edits a note: `{ title, body }` |
+
+## Running it locally
+
+You'll need Node 22.12 or newer, and a Cloudflare account if you want to deploy.
+
+```bash
+npm install
+
+# Local secrets (gitignored). Create .env with:
+#   BETTER_AUTH_SECRET=<at least 32 random characters>
+#   BETTER_AUTH_URL=http://localhost:5173
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+
+npm run db:migrate:local   # create the tables in the local D1 database
+npm run dev                # http://localhost:5173
+```
+
+### Scripts
+
+| Script | What it does |
+|---|---|
+| `npm run dev` | Vite dev server, with the Worker and a local D1 database |
+| `npm run build` | Type-checks, then builds the client and the Worker |
+| `npm run typecheck` | `tsc -b` |
+| `npm run lint` | Oxlint |
+| `npm run cf-typegen` | Regenerates the Worker's `Env` types from `wrangler.jsonc` |
+| `npm run db:generate` | Generates a SQL migration from the Drizzle schema |
+| `npm run db:migrate:local` / `db:migrate:remote` | Applies migrations to the local or production D1 database |
+| `npm run db:studio` | Opens Drizzle Studio on the local database |
+| `npm run deploy` | Builds and deploys to Cloudflare |
+
+### Changing the database
+
+```bash
+# Only if the Better Auth config changes (plugins decide its tables):
+npx auth@latest generate --config ./worker/utils/auth.ts --output ./worker/schemas/auth.ts
+
+npm run db:generate
+npm run db:migrate:local
+npm run db:migrate:remote
+```
+
+### Deploying
+
+```bash
+npx wrangler login
+npx wrangler secret put BETTER_AUTH_SECRET   # first time only
+npm run db:migrate:remote
+npm run deploy
+```
+
+`BETTER_AUTH_URL` for production is set in `wrangler.jsonc` under `vars`.
+
+## Ideas for later
+
+- "Claim your building": sign in with GitHub and keep your anonymous notes.
+- Turn around in the hallway to find a second row of doors, or take the stairs to other floors.
+- Deleting notes, plus other things to keep in rooms (links, files, little apps).
+- Proper low-poly models and sound recordings.

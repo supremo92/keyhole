@@ -2,7 +2,7 @@ import type { Door, Note } from "../../shared/types";
 import { leaveRoom, startWriting } from "../lib/flow";
 import { useView } from "../stores/view";
 
-export function Hud({ door, notes }: { door: Door | undefined; notes: Note[] | undefined }) {
+export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: Note[] | undefined; onHelp: () => void }) {
     const mode = useView((s) => s.mode);
 
     return (
@@ -10,6 +10,12 @@ export function Hud({ door, notes }: { door: Door | undefined; notes: Note[] | u
             <div className="title">
                 <span className="title-key">⚿</span> The Keyhole
             </div>
+
+            {mode === "hallway" && (
+                <button className="help-btn" onClick={onHelp} aria-label="How it works">
+                    ?
+                </button>
+            )}
 
             {mode === "hallway" && (
                 <div className="hint">Click a door to peek through its keyhole. Click a boarded-up doorway to pry it open.</div>
