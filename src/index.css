@@ -1,111 +1,366 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+    --ink: #2b2118;
+    --paper: #fffdf3;
+    --brass: #d8b54a;
+    --night: #0d0907;
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    color: #f6ead0;
+    background: var(--night);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+* {
+    box-sizing: border-box;
 }
 
+html,
+body,
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
 }
 
-body {
-  margin: 0;
+.app,
+.stage {
+    position: fixed;
+    inset: 0;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* Keyhole: black everywhere except a fuzzy keyhole. The hole grows when opened. */
+.keyhole {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.keyhole.open {
+    opacity: 1;
+}
+.keyhole-shape {
+    transform: scale(0.2);
+    transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+.keyhole.open .keyhole-shape {
+    transform: scale(1);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+.blackout {
+    position: absolute;
+    inset: 0;
+    background: var(--night);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 40;
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.blackout.on {
+    opacity: 1;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* Heads-up text and buttons. */
+.title {
+    position: absolute;
+    top: 18px;
+    left: 22px;
+    z-index: 20;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 26px;
+    letter-spacing: 0.04em;
+    color: var(--brass);
+    text-shadow: 0 2px 6px #000;
+    pointer-events: none;
+}
+.title-key {
+    display: inline-block;
+    transform: rotate(-12deg);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.hint {
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    max-width: min(90vw, 640px);
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(13, 9, 7, 0.7);
+    font-size: 14px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.room-name {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    z-index: 20;
+    font-family: Georgia, serif;
+    font-size: 24px;
+    text-align: right;
+    color: var(--brass);
+    text-shadow: 0 2px 6px #000;
+    pointer-events: none;
+}
+.room-name small {
+    display: block;
+    font-size: 13px;
+    color: #f6ead0;
+    opacity: 0.8;
+}
+
+.room-actions {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    border: 2px solid #8a6a2a;
+    border-radius: 10px;
+    padding: 10px 18px;
+    background: var(--brass);
+    color: var(--ink);
+    font: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #6b5220;
+    transition: transform 0.1s;
+}
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+.btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+.btn.ghost {
+    background: rgba(13, 9, 7, 0.75);
+    color: #f6ead0;
+    border-color: #6b5a3e;
+    box-shadow: none;
+}
+
+/* Labels inside the 3D scene (drei <Html>). */
+.door-plaque {
+    padding: 4px 10px;
+    border: 2px solid #8a6a2a;
+    border-radius: 4px;
+    background: linear-gradient(#e7c768, #b8912f);
+    color: var(--ink);
+    font-family: Georgia, serif;
+    font-size: 13px;
+    font-weight: bold;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition:
+        transform 0.15s,
+        opacity 0.2s;
+}
+.door-plaque.show {
+    opacity: 1;
+}
+.door-plaque.hovered {
+    transform: scale(1.12);
+}
+.door-plaque.boarded {
+    background: #3a2b1d;
+    color: #f6ead0;
+    border-color: #6b5a3e;
+}
+
+.note-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(255, 253, 243, 0.95);
+    color: var(--ink);
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+        opacity 0.2s,
+        transform 0.2s;
+}
+.note-label.show {
+    opacity: 1;
+    transform: none;
+}
+.note-label strong {
+    font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+    font-size: 15px;
+}
+.note-label span {
+    font-size: 11px;
+    opacity: 0.7;
+}
+@keyframes float-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+
+/* The paper note overlay. */
+.paper-stage,
+.modal-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 900px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.55));
+}
+
+.paper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: min(92vw, 460px);
+    height: min(80vh, 560px);
+    padding: 28px 30px 20px;
+    border-radius: 3px;
+    color: var(--ink);
+    box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.55),
+        inset 0 0 40px rgba(160, 130, 80, 0.15);
+    background-image: repeating-linear-gradient(transparent 0 31px, rgba(90, 120, 170, 0.25) 31px 32px) !important;
+    transform-origin: 50% 100%;
+}
+.paper-in {
+    animation: paper-up 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+.paper-in.from-under {
+    animation: paper-from-under 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.05);
+}
+.paper-out {
+    animation: paper-under 0.9s cubic-bezier(0.6, 0, 0.8, 0.4) forwards;
+}
+@keyframes paper-up {
+    from {
+        transform: translateY(70vh) rotate(-6deg);
+    }
+}
+@keyframes paper-from-under {
+    from {
+        transform: translateY(75vh) rotateX(75deg) scale(0.5);
+        opacity: 0.3;
+    }
+}
+@keyframes paper-under {
+    40% {
+        transform: translateY(20vh) rotateX(50deg) scale(0.8);
+    }
+    to {
+        transform: translateY(80vh) rotateX(82deg) scale(0.45);
+        opacity: 0;
+    }
+}
+
+.paper-title,
+.paper-body,
+.name-card input {
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--ink);
+    font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+}
+.paper-title {
+    font-size: 24px;
+    font-weight: bold;
+    border-bottom: 2px solid rgba(43, 33, 24, 0.3);
+    padding-bottom: 4px;
+}
+.paper-body {
+    flex: 1;
+    resize: none;
+    font-size: 17px;
+    line-height: 32px;
+}
+.paper-meta {
+    font-size: 12px;
+    opacity: 0.6;
+}
+.paper-error {
+    color: #b03a2e;
+    font-size: 14px;
+}
+.paper-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.name-card {
+    width: min(92vw, 420px);
+    padding: 26px;
+    border-radius: 12px;
+    background: #2a1e14;
+    border: 2px solid #6b5a3e;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: paper-up 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+.name-card h2 {
+    margin: 0;
+    font-family: Georgia, serif;
+    color: var(--brass);
+}
+.name-card p {
+    margin: 0;
+    opacity: 0.85;
+}
+.name-card input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--paper);
+    font-size: 18px;
+}
+
+.splash {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--night);
+    text-align: center;
+}
+.splash h1 {
+    margin: 0;
+    font-family: Georgia, serif;
+    color: var(--brass);
+    font-size: 44px;
+}
+.splash-key {
+    font-size: 70px;
+    color: var(--brass);
+    animation: wobble 1.6s ease-in-out infinite;
+}
+@keyframes wobble {
+    50% {
+        transform: rotate(-20deg);
+    }
 }
