@@ -9,6 +9,9 @@ import { AIM_NDC } from "./layout";
 const MAX_YAW = 1.15;
 const MAX_UP = 0.5;
 const MAX_DOWN = 0.82;
+// Where (in screen coordinates, -1 to 1) the view reaches its full turn and full downward tilt.
+const SIDE_REACH = 0.85;
+const DOWN_REACH = -0.6;
 
 // Eases the camera towards the target in the store, and adds mouse-look.
 export function CameraRig() {
@@ -39,10 +42,13 @@ export function CameraRig() {
         let pitch = 0;
         const { x, y } = state.pointer;
         if (mode === "peeking") {
-            yaw = -MathUtils.clamp(x, -1, 1) * MAX_YAW;
-            // Above the aim point looks up a little; below it looks down a long way.
-            const dy = MathUtils.clamp(y, -1, 1) - AIM_NDC[1];
-            pitch = dy > 0 ? (dy / (1 - AIM_NDC[1])) * MAX_UP : (dy / (1 + AIM_NDC[1])) * MAX_DOWN;
+            // Full turn is reached a little before the screen edges, so the mouse never has
+            // to go right to the edge (or off it, onto the taskbar) to look somewhere.
+            yaw = -MathUtils.clamp(x / SIDE_REACH, -1, 1) * MAX_YAW;
+            // Above the aim point looks up a little; below it looks down a long way, reaching
+            // the doormat about 80% of the way down the screen.
+            const dy = MathUtils.clamp(y, DOWN_REACH, 1) - AIM_NDC[1];
+            pitch = dy > 0 ? (dy / (1 - AIM_NDC[1])) * MAX_UP : (dy / (AIM_NDC[1] - DOWN_REACH)) * MAX_DOWN;
         } else if (mode === "hallway") {
             yaw = -x * 0.08;
             pitch = y * 0.04;
