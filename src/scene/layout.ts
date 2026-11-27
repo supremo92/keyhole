@@ -23,9 +23,12 @@ export const DOORMAT_PITCH = -0.38;
 
 // Ids of the clickable things in a room that aren't notes.
 export const EXIT_ID = "exit";
-export const WRITE_ID = "write";
+// The letter on the doormat: back to the note you are holding.
+export const WRITE_ID = "note";
 export const CAT_ID = "cat";
-export const RULEBOOK_ID = "rulebook";
+
+// Your staff locker, on the left wall near where you start.
+export const LOCKER_Z = -0.6;
 
 // Rooms are drawn far away from the hallway; the keyhole hides the jump.
 export const ROOM_ORIGIN: Vec3 = [100, 0, 0];
@@ -76,4 +79,7 @@ export const VIEWS = {
         look: doorToWorld(slot, KEYHOLE),
     }),
     room: { pos: roomToWorld([0, 1.45, 0.9]), look: roomToWorld([0, 0.85, -4]) } as View,
+    // Up close to the notice board at the end of the hallway, and to your locker.
+    board: { pos: [0, 1.6, HALL.far + 2.6], look: [0, 1.5, HALL.far] } as View,
+    locker: { pos: [-0.5, 1.55, LOCKER_Z], look: [-HALL.width / 2, 1.35, LOCKER_Z] } as View,
 };

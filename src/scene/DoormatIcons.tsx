@@ -6,7 +6,8 @@ import { useView } from "../stores/view";
 import { EXIT_ID, WRITE_ID, type Vec3 } from "./layout";
 
 // Two glowing icons on the floor just inside the door, shown when you look down
-// at the doormat: an arrow back to the hallway, and a letter for writing a note.
+// at the doormat: an arrow back to the hallway, and (if this resident is waiting for a
+// reply) the letter: back to the note you're holding.
 
 const arrowShape = (() => {
     const s = new Shape();
@@ -21,7 +22,17 @@ const arrowShape = (() => {
     return s;
 })();
 
-function FloorIcon({ id, position, label, children }: { id: string; position: Vec3; label: string; children: (color: string) => ReactNode }) {
+function FloorIcon({
+    id,
+    position,
+    label,
+    children,
+}: {
+    id: string;
+    position: Vec3;
+    label: string;
+    children: (color: string) => ReactNode;
+}) {
     const aimed = useView((s) => s.mode === "peeking" && s.hoveredId === id);
     const glow = useRef<MeshBasicMaterial>(null);
     useFrame(({ clock }) => {
@@ -46,10 +57,10 @@ function FloorIcon({ id, position, label, children }: { id: string; position: Ve
     );
 }
 
-export function DoormatIcons() {
+export function DoormatIcons({ showNote }: { showNote: boolean }) {
     return (
         <>
-            <FloorIcon id={EXIT_ID} position={[-0.24, 0.012, -0.6]} label="Leave">
+            <FloorIcon id={EXIT_ID} position={[showNote ? -0.24 : 0, 0.012, -0.6]} label="Leave">
                 {(color) => (
                     // Lying flat, pointing back towards the door.
                     <mesh rotation={[-Math.PI / 2, 0, Math.PI]} position={[0, 0.002, 0]} scale={0.75}>
@@ -58,23 +69,25 @@ export function DoormatIcons() {
                     </mesh>
                 )}
             </FloorIcon>
-            <FloorIcon id={WRITE_ID} position={[0.24, 0.012, -0.6]} label="Write a note">
-                {(color) => (
-                    // A little letter: a sheet of paper with a few written lines.
-                    <group rotation={[-Math.PI / 2, 0, 0.15]} position={[0, 0.002, 0]} scale={0.75}>
-                        <mesh>
-                            <planeGeometry args={[0.26, 0.32]} />
-                            <meshBasicMaterial color={color} />
-                        </mesh>
-                        {[0.09, 0.04, -0.01, -0.06].map((y, i) => (
-                            <mesh key={y} position={[i === 3 ? -0.03 : 0, y, 0.001]}>
-                                <planeGeometry args={[i === 3 ? 0.12 : 0.18, 0.014]} />
-                                <meshBasicMaterial color="#8a6a2a" />
+            {showNote && (
+                <FloorIcon id={WRITE_ID} position={[0.24, 0.012, -0.6]} label="Back to the note">
+                    {(color) => (
+                        // A little letter: a sheet of paper with a few written lines.
+                        <group rotation={[-Math.PI / 2, 0, 0.15]} position={[0, 0.002, 0]} scale={0.75}>
+                            <mesh>
+                                <planeGeometry args={[0.26, 0.32]} />
+                                <meshBasicMaterial color={color} />
                             </mesh>
-                        ))}
-                    </group>
-                )}
-            </FloorIcon>
+                            {[0.09, 0.04, -0.01, -0.06].map((y, i) => (
+                                <mesh key={y} position={[i === 3 ? -0.03 : 0, y, 0.001]}>
+                                    <planeGeometry args={[i === 3 ? 0.12 : 0.18, 0.014]} />
+                                    <meshBasicMaterial color="#8a6a2a" />
+                                </mesh>
+                            ))}
+                        </group>
+                    )}
+                </FloorIcon>
+            )}
         </>
     );
 }

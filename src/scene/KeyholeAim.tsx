@@ -1,10 +1,10 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { Raycaster, Vector2, type Object3D } from "three";
-import { leaveRoom, openNote, startWriting } from "../lib/flow";
+import { backToNote, leaveRoom } from "../lib/flow";
 import { useView } from "../stores/view";
 import { sounds } from "../lib/sound";
-import { AIM_NDC, CAT_ID, DOORMAT_EXIT, DOORMAT_ZONE, EXIT_ID, RULEBOOK_ID, WRITE_ID } from "./layout";
+import { AIM_NDC, CAT_ID, DOORMAT_EXIT, DOORMAT_ZONE, EXIT_ID, WRITE_ID } from "./layout";
 
 // Walk up the parents to find the interactive thing a mesh belongs to.
 function interactIdOf(object: Object3D | null): string | null {
@@ -15,8 +15,9 @@ function interactIdOf(object: Object3D | null): string | null {
 }
 
 // While peeking, whatever sits in the centre of the keyhole is "aimed at", and clicking
-// takes that note out. In the doormat strip at the bottom of the screen the mouse pointer
-// is visible instead, and picks the floor icons (or anything else) directly.
+// does something (leave, go back to the note, annoy the cat); inventory tags just show their
+// glyph. In the doormat strip at the bottom of the screen the mouse pointer is visible
+// instead, and picks the floor icons (or anything else) directly.
 export function KeyholeAim() {
     const { camera, scene } = useThree();
     const target = useThree((s) => s.events.connected) as HTMLElement | undefined;
@@ -54,10 +55,9 @@ export function KeyholeAim() {
             const { mode, hoveredId } = useView.getState();
             if (mode !== "peeking" || !hoveredId) return;
             if (hoveredId === EXIT_ID) void leaveRoom();
-            else if (hoveredId === WRITE_ID) void startWriting();
-            else if (hoveredId === CAT_ID) sounds.meow();
-            else if (hoveredId === RULEBOOK_ID) useView.getState().set({ mode: "rulebook", hoveredId: null });
-            else void openNote(hoveredId);
+            else if (hoveredId === WRITE_ID) void backToNote();
+            else if (hoveredId === CAT_ID || hoveredId === "tag:cat") sounds.meow();
+            // Inventory tags just show their glyph; there's nothing to click.
         };
         target.addEventListener("click", click);
         return () => target.removeEventListener("click", click);

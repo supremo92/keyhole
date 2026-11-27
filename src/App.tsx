@@ -2,31 +2,27 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { useDoors, useNotes } from "./lib/api";
+import { useShift } from "./lib/api";
 import { ensureSession } from "./lib/auth-client";
+import { leaveRoom } from "./lib/flow";
 import { queryClient } from "./lib/queryClient";
 import { warmUpAudio } from "./lib/sound";
-import { leaveRoom, maybeStrayPaper } from "./lib/flow";
 import { Hud } from "./overlays/Hud";
 import { Intro } from "./overlays/Intro";
 import { KeyholeMask } from "./overlays/KeyholeMask";
-import { NamePrompt } from "./overlays/NamePrompt";
-import { PaperSheet } from "./overlays/PaperSheet";
-import { ReplySlip } from "./overlays/ReplySlip";
-import { RulebookOverlay } from "./overlays/RulebookOverlay";
-import { OperatorGame } from "./overlays/OperatorGame";
+import { NoteDesk } from "./overlays/NoteDesk";
+import { BoardOverlay, EyeFlash, Finale, LockerOverlay, ResponseNote, Tannoy } from "./overlays/Readings";
 import { CameraRig } from "./scene/CameraRig";
-import { KeyholeAim } from "./scene/KeyholeAim";
-import { Walker } from "./scene/Walker";
 import { Hallway } from "./scene/Hallway";
+import { KeyholeAim } from "./scene/KeyholeAim";
 import { VIEWS, WALK } from "./scene/layout";
 import { Room } from "./scene/Room";
+import { roomDef } from "./scene/rooms";
 import { SlidingPaper } from "./scene/SlidingPaper";
-import { StrayPaper } from "./scene/StrayPaper";
+import { Walker } from "./scene/Walker";
 import { useView } from "./stores/view";
 
 const INTRO_KEY = "keyhole-intro-seen";
-
 
 export default function App() {
     return (
@@ -39,26 +35,25 @@ export default function App() {
 function Keyhole() {
     const [auth, setAuth] = useState<"pending" | "ready" | "error">("pending");
     const appRef = useRef<HTMLDivElement>(null);
-    const { mode, doorId, doorSlot, noteId, blackout, keyhole, roomId } = useView(
-        useShallow((s) => ({ mode: s.mode, doorId: s.doorId, doorSlot: s.doorSlot, noteId: s.noteId, blackout: s.blackout, keyhole: s.keyhole, roomId: s.roomId })),
+    const { mode, roomId, roomShown, response, blackout, keyhole } = useView(
+        useShallow((s) => ({
+            mode: s.mode,
+            roomId: s.roomId,
+            roomShown: s.roomShown,
+            response: s.response,
+            blackout: s.blackout,
+            keyhole: s.keyhole,
+        })),
     );
     const aimed = useView((s) => s.mode === "peeking" && s.hoveredId !== null);
     const doormat = useView((s) => s.doormat);
-    const doors = useDoors(auth === "ready");
-    const door = doors.data?.find((d) => d.id === doorId);
-    const notes = useNotes(doorId);
-    const note = notes.data?.find((n) => n.id === noteId);
+    const shift = useShift(auth === "ready");
     const [showIntro, setShowIntro] = useState(() => !localStorage.getItem(INTRO_KEY));
 
-    const loading = auth === "pending" || doors.isPending;
-    const failed = auth === "error" || doors.isError;
+    const loading = auth === "pending" || shift.isPending;
+    const failed = auth === "error" || shift.isError;
     const introOpen = showIntro && !loading && mode === "hallway";
     useEffect(() => useView.getState().set({ paused: introOpen }), [introOpen]);
-
-    const hallwayReady = !!doors.data && !introOpen && mode === "hallway";
-    useEffect(() => {
-        if (hallwayReady && new URLSearchParams(location.search).has("stray")) maybeStrayPaper();
-    }, [hallwayReady]);
 
     const closeIntro = () => {
         localStorage.setItem(INTRO_KEY, "1");
@@ -80,7 +75,6 @@ function Keyhole() {
         return () => window.removeEventListener("keydown", onKey);
     }, []);
 
-
     return (
         <div className="app">
             {/* The stage holds only the canvas (and its labels). Pointer positions are read in
@@ -95,27 +89,28 @@ function Keyhole() {
                     eventPrefix="client"
                 >
                     <color attach="background" args={["#0d0907"]} />
-                    <ambientLight intensity={0.5} />
-                    <hemisphereLight args={["#fff3dd", "#3a2a1e", 0.5]} />
+                    {/* Night shift: dimmer than the old daytime building. */}
+                    <ambientLight intensity={0.32} />
+                    <hemisphereLight args={["#e8eaff", "#2a1e16", 0.35]} />
                     <CameraRig />
                     <Walker />
                     <KeyholeAim />
-                    {doors.data && <Hallway doors={doors.data} />}
-                    {door && roomId === door.id && <Room door={door} />}
+                    {shift.data && <Hallway shift={shift.data} />}
+                    {shift.data && roomShown && <Room room={roomDef(roomShown)} />}
                     <SlidingPaper />
-                    <StrayPaper />
                 </Canvas>
             </div>
 
             <KeyholeMask open={keyhole} aimed={aimed} showRing={!doormat} />
-            <Hud door={door} notes={notes.data} onHelp={() => setShowIntro(true)} />
+            <EyeFlash />
+            <Hud shift={shift.data} onHelp={() => setShowIntro(true)} />
+            <Tannoy />
 
-            {mode === "writing" && door && <PaperSheet mode="write" doorId={door.id} />}
-            {mode === "reading" && door && note && <PaperSheet key={note.id} mode="read" doorId={door.id} note={note} />}
-            {mode === "reply" && note && <ReplySlip key={note.id} note={note} />}
-            {mode === "rulebook" && <RulebookOverlay notes={notes.data ?? []} />}
-            {mode === "operating" && <OperatorGame />}
-            {mode === "naming" && doorSlot !== null && <NamePrompt slot={doorSlot} />}
+            {mode === "note" && roomId && shift.data && <NoteDesk key={roomId} roomId={roomId} shift={shift.data} />}
+            {mode === "response" && response && <ResponseNote response={response} />}
+            {mode === "board" && <BoardOverlay shift={shift.data} />}
+            {mode === "locker" && <LockerOverlay shift={shift.data} />}
+            {mode === "finale" && <Finale />}
             {introOpen && <Intro onClose={closeIntro} />}
 
             <div className={`blackout ${blackout ? "on" : ""}`} />
@@ -123,7 +118,7 @@ function Keyhole() {
                 <div className="splash">
                     <div className="splash-key">⚿</div>
                     <h1>The Keyhole</h1>
-                    <p>{failed ? "The hallway is locked. Try refreshing the page." : "The Operators are expecting you..."}</p>
+                    <p>{failed ? "The Institute is locked. Try refreshing the page." : "Clocking in for the night shift..."}</p>
                 </div>
             )}
         </div>

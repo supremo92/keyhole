@@ -5,7 +5,7 @@ import { Vector3, type Group } from "three";
 import { useView } from "../stores/view";
 import { Box } from "./Box";
 import { CAT_ID, type Vec3 } from "./layout";
-import type { CatCoat, CatMood } from "./catPlan";
+import type { CatCoat, CatMood } from "./catTypes";
 import { OutlineContext } from "./outline";
 
 // The building's cat, drawn in one of its moods (see catPlan.ts).
@@ -164,10 +164,25 @@ const CAT_LINES: Record<CatMood, string> = {
     knock: "It is maintaining eye contact.",
 };
 
-export function Cat({ mood, coat, position = [0, 0, 0], rotY = 0, swat = false }: { mood: CatMood; coat: CatCoat; position?: Vec3; rotY?: number; swat?: boolean }) {
+export function Cat({
+    mood,
+    coat,
+    position = [0, 0, 0],
+    rotY = 0,
+    swat = false,
+    interactId = CAT_ID,
+}: {
+    mood: CatMood;
+    coat: CatCoat;
+    position?: Vec3;
+    rotY?: number;
+    swat?: boolean;
+    // A room can give the cat an inventory tag instead (see RoomScenes).
+    interactId?: string;
+}) {
     const aimed = useView((s) => s.mode === "peeking" && s.hoveredId === CAT_ID);
     return (
-        <group position={position} rotation={[0, rotY, 0]} scale={CAT_SCALE} userData={{ interactId: CAT_ID }}>
+        <group position={position} rotation={[0, rotY, 0]} scale={CAT_SCALE} userData={{ interactId }}>
             <OutlineContext.Provider value={CAT_OUTLINE}>
                 {mood === "sleep" ? <SleepingCat coat={coat} /> : <SittingCat coat={coat} swat={swat} />}
             </OutlineContext.Provider>

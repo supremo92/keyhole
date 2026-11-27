@@ -11,8 +11,8 @@
         "typecheck": "tsc -b",
         "cf-typegen": "wrangler types",
         "db:generate": "drizzle-kit generate",
-        "db:migrate:local": "wrangler d1 migrations apply keyhole-db --local",
-        "db:migrate:remote": "wrangler d1 migrations apply keyhole-db --remote",
+        "db:migrate:local": "wrangler d1 migrations apply keyhole-night-db --local",
+        "db:migrate:remote": "wrangler d1 migrations apply keyhole-night-db --remote",
         "db:studio": "drizzle-kit studio",
         "deploy": "npm run build && wrangler deploy"
     },

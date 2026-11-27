@@ -81,6 +81,38 @@ export const sounds = {
     sigh() {
         noiseBurst({ duration: 1.1, gain: 0.12, type: "bandpass", freq: 700, freqTo: 300, q: 0.7 });
     },
+    // A sharp intake of breath. Not yours.
+    gasp() {
+        noiseBurst({ duration: 0.45, gain: 0.12, type: "bandpass", freq: 1400, freqTo: 2600, q: 1.2 });
+    },
+    // Something heavy, somewhere out in the hallway.
+    thud() {
+        noiseBurst({ duration: 0.3, gain: 0.45, type: "lowpass", freq: 120 });
+    },
+    // A chair dragged across floorboards.
+    scrape() {
+        noiseBurst({ duration: 0.6, gain: 0.1, type: "bandpass", freq: 500, freqTo: 900, q: 3 });
+    },
+    // A metal locker door.
+    locker() {
+        noiseBurst({ duration: 0.25, gain: 0.2, type: "bandpass", freq: 2200, freqTo: 1600, q: 8 });
+        noiseBurst({ at: 0.05, duration: 0.15, gain: 0.25, type: "lowpass", freq: 300 });
+    },
+    // One drop of water landing in a puddle. Ambient: silent until audio is allowed.
+    drip() {
+        if (ctx?.state !== "running") return;
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(1800, t);
+        osc.frequency.exponentialRampToValueAtTime(600, t + 0.08);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.06, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+        osc.connect(g).connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.13);
+    },
     // A heavy page turning.
     page() {
         noiseBurst({ duration: 0.35, gain: 0.1, type: "bandpass", freq: 1800, freqTo: 600, q: 0.6 });

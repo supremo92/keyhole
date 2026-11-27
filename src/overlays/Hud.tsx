@@ -1,14 +1,19 @@
-import type { Door, Note } from "../../shared/types";
+import type { ShiftState } from "../../shared/lexicon";
+import { roomDef } from "../scene/rooms";
 import { useView } from "../stores/view";
 
-export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: Note[] | undefined; onHelp: () => void }) {
+export function Hud({ shift, onHelp }: { shift: ShiftState | undefined; onHelp: () => void }) {
     const mode = useView((s) => s.mode);
-    const stray = useView((s) => s.strayPaper !== null);
+    const roomId = useView((s) => s.roomId);
+    const waiting = shift?.rooms.find((r) => r.status === "waiting");
+    const roomStatus = shift?.rooms.find((r) => r.id === roomId)?.status;
+    const answered = shift?.rooms.filter((r) => r.status === "solved").length ?? 0;
 
     return (
         <>
             <div className="title">
                 <span className="title-key">⚿</span> The Keyhole
+                <small className="title-sub">Institute of Rooms · Night shift</small>
             </div>
 
             {mode === "hallway" && (
@@ -17,28 +22,33 @@ export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: No
                 </button>
             )}
 
-            {mode === "hallway" && (
+            {mode === "hallway" && shift && (
                 <div className="hint">
-                    {stray
-                        ? "A paper has slid out from under one of the boarded-up doorways. Someone in there needs an Operator. Click it to pick it up."
-                        : "Scroll or use W/S to walk. Click a door to peek through its keyhole, or a boarded-up doorway to pry it open."}
+                    {shift.finished
+                        ? "Every resident has been answered. The Institute is quiet. Too quiet."
+                        : waiting
+                          ? `A note has been slid out under Room ${roomDef(waiting.id).plate}. Pick it up. Scroll or W/S to walk. The notice board and your locker might help.`
+                          : "Scroll or use W/S to walk."}
                 </div>
             )}
 
-            {mode === "peeking" && door && (
+            {mode === "peeking" && roomId && (
                 <>
                     <div className="room-name">
-                        {door.name}
-                        <small>
-                            {notes?.length ?? 0} note{notes?.length === 1 ? "" : "s"}
-                        </small>
+                        Room {roomDef(roomId).plate}
+                        <small>{roomStatus === "solved" ? "answered" : roomStatus === "waiting" ? "waiting for a reply" : "nothing yet"}</small>
                     </div>
                     <div className="hint top">
-                        {notes?.length
-                            ? "Move the mouse to look around. Line something up in the keyhole and click it: a note, the cat, or the Rulebook on the Operator's desk. Move to the bottom of the screen to write a note or leave."
-                            : "An empty room, and an Operator with nothing to do. Move to the bottom of the screen and click the letter to slide a note under the door."}
+                        Move the mouse to look around. Line things up in the keyhole to read their inventory tags. Move to the bottom of the screen
+                        {roomStatus === "waiting" ? " to go back to the note, or leave." : " to leave."}
                     </div>
                 </>
+            )}
+
+            {mode === "hallway" && shift && (
+                <div className="shift-tally">
+                    {answered} / {shift.rooms.length} answered
+                </div>
             )}
         </>
     );

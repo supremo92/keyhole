@@ -4,10 +4,12 @@ import { CanvasTexture, Color, SRGBColorSpace, type MeshBasicMaterial, type Poin
 import { DOOR_SLOTS } from "../../shared/constants";
 import { sounds } from "../lib/sound";
 import { useView } from "../stores/view";
-import type { Door as DoorData } from "../../shared/types";
+import type { ShiftState } from "../../shared/lexicon";
 import { BoardedDoorway } from "./BoardedDoorway";
 import { Box } from "./Box";
 import { Door } from "./Door";
+import { CeilingLeak, Gifts, HallChair, Locker, NoticeBoard, TannoySpeaker, WaitingNote, WallDecay } from "./HallwayProps";
+import { ROOMS } from "./rooms";
 import { HALL } from "./layout";
 import { wallpaper, woodFloor } from "./textures";
 
@@ -100,13 +102,13 @@ function signArt() {
     g.fillStyle = "#efe2bd";
     g.textAlign = "center";
     g.font = "bold 54px Georgia, serif";
-    g.fillText("THE DEPARTMENT OF ROOMS", c.width / 2, 130);
+    g.fillText("THE INSTITUTE OF ROOMS", c.width / 2, 130);
     g.font = "italic 38px Georgia, serif";
-    g.fillText("All enquiries to be slid under the door.", c.width / 2, 225);
-    g.fillText("The Operators will reply in due course.", c.width / 2, 285);
+    g.fillText("Night Operators: answer every note.", c.width / 2, 225);
+    g.fillText("The residents are not to be seen.", c.width / 2, 285);
     g.font = "bold 30px Georgia, serif";
     g.fillStyle = "#d9b45a";
-    g.fillText("DO NOT ATTEMPT TO UNDERSTAND THE REPLIES", c.width / 2, 385);
+    g.fillText("THEY CAN SEE YOU. THAT IS DIFFERENT.", c.width / 2, 385);
     signTexture = new CanvasTexture(c);
     signTexture.colorSpace = SRGBColorSpace;
     signTexture.anisotropy = 8;
@@ -125,8 +127,8 @@ function Sign({ position, rotY }: { position: [number, number, number]; rotY: nu
     );
 }
 
-export function Hallway({ doors }: { doors: DoorData[] }) {
-    const bySlot = new Map(doors.map((d) => [d.doorSlot, d]));
+export function Hallway({ shift }: { shift: ShiftState | undefined }) {
+    const doorSlots = new Set(ROOMS.map((r) => r.slot));
     const sideWall = wallpaper("stripes", ["#5d7a6a", "#4d6858"], [LENGTH / 1.3, 2]);
     const endWall = wallpaper("stripes", ["#5d7a6a", "#4d6858"], [HALL.width / 1.3, 2]);
 
@@ -139,11 +141,11 @@ export function Hallway({ doors }: { doors: DoorData[] }) {
             </mesh>
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, MID_Z - 1]} receiveShadow>
                 <planeGeometry args={[1.3, LENGTH - 4]} />
-                <meshStandardMaterial color="#7d2430" roughness={1} />
+                <meshStandardMaterial color="#5e1f27" roughness={1} />
             </mesh>
             <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, HALL.height, MID_Z]}>
                 <planeGeometry args={[HALL.width, LENGTH]} />
-                <meshStandardMaterial color="#e9e0cf" />
+                <meshStandardMaterial color="#d9cfbb" />
             </mesh>
 
             {/* Walls with wallpaper above dark wood panelling. */}
@@ -172,12 +174,25 @@ export function Hallway({ doors }: { doors: DoorData[] }) {
             <Picture position={[-HALL.width / 2 + 0.04, 1.7, 1]} rotY={Math.PI / 2} color="#6b8fb5" />
             <Sign position={[HALL.width / 2 - 0.035, 1.75, 2.4]} rotY={-Math.PI / 2} />
             <Picture position={[HALL.width / 2 - 0.04, 1.7, -5]} rotY={-Math.PI / 2} color="#b56b6b" />
-            <Picture position={[-HALL.width / 2 + 0.04, 1.7, -9]} rotY={Math.PI / 2} color="#8fb56b" />
 
-            {Array.from({ length: DOOR_SLOTS }, (_, slot) => {
-                const door = bySlot.get(slot);
-                return door ? <Door key={door.id} door={door} /> : <BoardedDoorway key={`boarded-${slot}`} slot={slot} />;
-            })}
+            {/* Four residents, and two doorways nobody talks about. */}
+            {ROOMS.map((r) => (
+                <Door key={r.id} room={r} />
+            ))}
+            {Array.from({ length: DOOR_SLOTS }, (_, slot) => slot)
+                .filter((slot) => slot !== 0 && !doorSlots.has(slot))
+                .map((slot) => (
+                    <BoardedDoorway key={slot} slot={slot} />
+                ))}
+
+            <NoticeBoard />
+            <Locker />
+            <WaitingNote shift={shift} />
+            <Gifts shift={shift} />
+            <CeilingLeak />
+            <WallDecay />
+            <HallChair />
+            <TannoySpeaker />
         </group>
     );
 }

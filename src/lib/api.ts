@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Door, Note } from "../../shared/types";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import type { AnswerResult, RoomId, ShiftState } from "../../shared/lexicon";
+import { queryClient } from "./queryClient";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const res = await fetch(path, {
@@ -14,43 +15,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return data as T;
 }
 
-export const useDoors = (enabled: boolean) =>
-    useQuery({ queryKey: ["doors"], queryFn: () => request<Door[]>("/api/doors"), enabled });
+// The night so far: which rooms are waiting, solved or locked, and your Phrasebook.
+export const useShift = (enabled: boolean) =>
+    useQuery({ queryKey: ["shift"], queryFn: () => request<ShiftState>("/api/shift"), enabled });
 
-// Shared by the hook and by prefetching when you click a door.
-export const notesQuery = (doorId: string | null) => ({
-    queryKey: ["notes", doorId],
-    queryFn: () => request<Note[]>(`/api/doors/${doorId}/notes`),
-});
+export const getShift = () => queryClient.getQueryData<ShiftState>(["shift"]);
 
-export const useNotes = (doorId: string | null) => useQuery({ ...notesQuery(doorId), enabled: !!doorId });
-
-export function useCreateDoor() {
-    const qc = useQueryClient();
+// Slide a reply (glyphs) under a door. The Worker checks it.
+export function useAnswer() {
     return useMutation({
-        mutationFn: (input: { doorSlot: number; name: string }) =>
-            request<Door>("/api/doors", { method: "POST", body: JSON.stringify(input) }),
-        onSuccess: (door) => qc.setQueryData<Door[]>(["doors"], (old) => [...(old ?? []), door]),
-    });
-}
-
-export function useCreateNote() {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: ({ doorId, ...input }: { doorId: string; title: string; body: string }) =>
-            request<Note>(`/api/doors/${doorId}/notes`, { method: "POST", body: JSON.stringify(input) }),
-        onSuccess: (note) => qc.setQueryData<Note[]>(["notes", note.doorId], (old) => [...(old ?? []), note]),
-    });
-}
-
-export function useUpdateNote() {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: ({ id, ...input }: { id: string; title: string; body: string }) =>
-            request<Note>(`/api/notes/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
-        onSuccess: (note) =>
-            qc.setQueryData<Note[]>(["notes", note.doorId], (old) =>
-                (old ?? []).map((n) => (n.id === note.id ? note : n)),
-            ),
+        mutationFn: ({ roomId, reply }: { roomId: RoomId; reply: string[] }) =>
+            request<AnswerResult>(`/api/rooms/${roomId}/answer`, { method: "POST", body: JSON.stringify({ reply }) }),
+        onSuccess: (result) => queryClient.setQueryData(["shift"], result.shift),
     });
 }

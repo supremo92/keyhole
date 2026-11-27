@@ -3,32 +3,31 @@ export function Intro({ onClose }: { onClose: () => void }) {
     return (
         <div className="modal-stage">
             <div className="name-card intro-card">
-                <h2>⚿ Welcome to The Keyhole</h2>
+                <h2>⚿ The Institute of Rooms</h2>
                 <p>
-                    Behind every door in this building sits an <strong>Operator</strong>. They can't read a word you write. They file
-                    your notes anyway, by following the Rulebook, and they always reply.
+                    It's your first night shift. Something lives behind every door. They only talk by sliding notes under the door, in a script
+                    nobody can read. <strong>Your job is to answer them.</strong>
                 </p>
-                <p className="intro-small">Nobody here understands your notes. They are, however, extremely well organised.</p>
+                <p className="intro-small">The residents are not to be seen. They can see you. That is different.</p>
                 <ul>
                     <li>
-                        <strong>Every door is a folder.</strong> Scroll (or W/S) to walk the hallway. Click a door to peek through its
-                        keyhole.
+                        <strong>Pick up the note</strong> lying outside a door. Pencil in guesses for the symbols you don't know.
                     </li>
                     <li>
-                        <strong>Slide notes under the door.</strong> Look down at the doormat and click the letter. The Operator files
-                        your note on a piece of furniture, then sends back a reply.
+                        <strong>Peek through the keyhole</strong> for clues. Everything in the Institute has an inventory tag: line one up to read
+                        its symbol.
                     </li>
                     <li>
-                        <strong>Line things up in the keyhole</strong> and click: take a note out to read or edit it, open the Rulebook
-                        on the Operator's desk, or say hello to the cat.
+                        <strong>Reply in their script</strong> using the glyph tiles, and slide it back under the door.
                     </li>
                     <li>
-                        <strong>Boarded-up doorways</strong> can be pried open to make a new door (and hire a new Operator).
+                        <strong>Your locker</strong> holds your Phrasebook. <strong>The notice board</strong> at the end of the corridor has
+                        instructions and hints.
                     </li>
                 </ul>
                 <div className="paper-actions intro-actions">
                     <button className="btn" onClick={onClose} autoFocus>
-                        Step into the hallway
+                        Clock in
                     </button>
                 </div>
             </div>

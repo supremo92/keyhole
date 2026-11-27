@@ -1,7 +1,6 @@
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
-import { doorRoutes } from "./routes/doors";
-import { noteRoutes } from "./routes/notes";
+import { shiftRoutes } from "./routes/shift";
 import type { AppEnv } from "./types";
 import { auth } from "./utils/auth";
 
@@ -25,7 +24,7 @@ app.use("/api/*", async (c, next) => {
     await next();
 });
 
-app.route("/api/doors", doorRoutes);
-app.route("/api/notes", noteRoutes);
+// The night shift: progress, and replies slid under doors.
+app.route("/api", shiftRoutes);
 
 export default app;

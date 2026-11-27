@@ -1,7 +1,8 @@
-import type { FurnitureType } from "../../shared/constants";
 import { Box } from "./Box";
 import { OutlineFor } from "./outline";
 import type { Vec3 } from "./layout";
+
+export type FurnitureType = "table" | "desk" | "bookshelf" | "dresser" | "stool" | "armchair" | "piano" | "crate";
 
 // Where a note rests on each piece of furniture (local space, front faces +z).
 export const NOTE_SPOT: Record<FurnitureType, Vec3> = {

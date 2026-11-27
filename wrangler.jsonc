@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   // The Worker's name on Cloudflare (also part of its default URL).
-  "name": "keyhole",
+  "name": "keyhole-night",
   // Entry file: where the Worker's code starts.
   "main": "worker/index.ts",
   // Pins runtime behaviour to this date so platform updates don't change our code silently.
@@ -9,7 +9,7 @@
   // Plain (non-secret) settings. Locally, the same names in .env override these.
   // BETTER_AUTH_SECRET is a secret: set with `wrangler secret put`, never stored here.
   "vars": {
-    "BETTER_AUTH_URL": "https://keyhole.joshkingswood.workers.dev"
+    "BETTER_AUTH_URL": "https://keyhole-night.joshkingswood.workers.dev"
   },
   "assets": {
     // Unknown paths return index.html so the React router can handle them.
@@ -22,8 +22,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "keyhole-db",
-      "database_id": "40db7f97-064a-4d2b-b03e-dd43469f9323",
+      "database_name": "keyhole-night-db",
+      "database_id": "f58016a2-de01-4854-badd-b4e7db9018d8",
       // Where Drizzle's generated SQL migrations live (used by `wrangler d1 migrations apply`).
       "migrations_dir": "drizzle"
     }

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "1324185e-0316-4580-9019-8dc9fac97cb4",
+  "id": "6534b09b-a30b-48f5-b2d8-8158d5662731",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -364,16 +364,9 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "doors": {
-      "name": "doors",
+    "learned_words": {
+      "name": "learned_words",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
         "user_id": {
           "name": "user_id",
           "type": "text",
@@ -381,95 +374,26 @@
           "notNull": true,
           "autoincrement": false
         },
-        "name": {
-          "name": "name",
+        "word": {
+          "name": "word",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "colour": {
-          "name": "colour",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "floor": {
-          "name": "floor",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "side": {
-          "name": "side",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'front'"
-        },
-        "door_slot": {
-          "name": "door_slot",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "design": {
-          "name": "design",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "wallpaper": {
-          "name": "wallpaper",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "carpet_colour": {
-          "name": "carpet_colour",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "window_layout": {
-          "name": "window_layout",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
+        "learned_at": {
+          "name": "learned_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         }
       },
-      "indexes": {
-        "doors_user_id_floor_side_door_slot_unique": {
-          "name": "doors_user_id_floor_side_door_slot_unique",
-          "columns": [
-            "user_id",
-            "floor",
-            "side",
-            "door_slot"
-          ],
-          "isUnique": true
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
-        "doors_user_id_user_id_fk": {
-          "name": "doors_user_id_user_id_fk",
-          "tableFrom": "doors",
+        "learned_words_user_id_user_id_fk": {
+          "name": "learned_words_user_id_user_id_fk",
+          "tableFrom": "learned_words",
           "tableTo": "user",
           "columnsFrom": [
             "user_id"
@@ -481,27 +405,21 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "learned_words_user_id_word_pk": {
+          "columns": [
+            "user_id",
+            "word"
+          ],
+          "name": "learned_words_user_id_word_pk"
+        }
+      },
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "notes": {
-      "name": "notes",
+    "solved_rooms": {
+      "name": "solved_rooms",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "door_id": {
-          "name": "door_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "user_id": {
           "name": "user_id",
           "type": "text",
@@ -509,97 +427,26 @@
           "notNull": true,
           "autoincrement": false
         },
-        "title": {
-          "name": "title",
+        "room_id": {
+          "name": "room_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "body_front": {
-          "name": "body_front",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "body_back": {
-          "name": "body_back",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "colour": {
-          "name": "colour",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "design": {
-          "name": "design",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "furniture": {
-          "name": "furniture",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "room_slot": {
-          "name": "room_slot",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
+        "solved_at": {
+          "name": "solved_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         }
       },
-      "indexes": {
-        "notes_door_id_room_slot_unique": {
-          "name": "notes_door_id_room_slot_unique",
-          "columns": [
-            "door_id",
-            "room_slot"
-          ],
-          "isUnique": true
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
-        "notes_door_id_doors_id_fk": {
-          "name": "notes_door_id_doors_id_fk",
-          "tableFrom": "notes",
-          "tableTo": "doors",
-          "columnsFrom": [
-            "door_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "notes_user_id_user_id_fk": {
-          "name": "notes_user_id_user_id_fk",
-          "tableFrom": "notes",
+        "solved_rooms_user_id_user_id_fk": {
+          "name": "solved_rooms_user_id_user_id_fk",
+          "tableFrom": "solved_rooms",
           "tableTo": "user",
           "columnsFrom": [
             "user_id"
@@ -611,7 +458,15 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "solved_rooms_user_id_room_id_pk": {
+          "columns": [
+            "user_id",
+            "room_id"
+          ],
+          "name": "solved_rooms_user_id_room_id_pk"
+        }
+      },
       "uniqueConstraints": {},
       "checkConstraints": {}
     }

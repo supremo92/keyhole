@@ -1,6 +1,6 @@
 import { Html } from "@react-three/drei";
 import { useState } from "react";
-import type { Door as DoorData } from "../../shared/types";
+import type { RoomDef } from "./rooms";
 import { peek } from "../lib/flow";
 import { useView } from "../stores/view";
 import { Box } from "./Box";
@@ -16,8 +16,8 @@ export function DoorFrame({ color = "#3b2a1c" }: { color?: string }) {
     );
 }
 
-export function Door({ door }: { door: DoorData }) {
-    const { position, rotY } = slotTransform(door.doorSlot);
+export function Door({ room }: { room: RoomDef }) {
+    const { position, rotY } = slotTransform(room.slot);
     const mode = useView((s) => s.mode);
     const [hovered, setHovered] = useState(false);
     const active = mode === "hallway";
@@ -28,7 +28,7 @@ export function Door({ door }: { door: DoorData }) {
             <group
                 onClick={(e) => {
                     e.stopPropagation();
-                    if (active) void peek(door);
+                    if (active) void peek(room.id);
                 }}
                 onPointerOver={(e) => {
                     e.stopPropagation();
@@ -43,7 +43,7 @@ export function Door({ door }: { door: DoorData }) {
                 <Box
                     size={[1.1, 2.16, 0.06]}
                     position={[0, 1.12, 0.03]}
-                    color={door.colour}
+                    color={room.door}
                     emissive={hovered && active ? "#2a2010" : "#000000"}
                 />
                 {[0.24, -0.24].map((x) =>
@@ -67,7 +67,8 @@ export function Door({ door }: { door: DoorData }) {
                 </mesh>
             </group>
             <Html position={[0, 2.5, 0.1]} center zIndexRange={[5, 0]} pointerEvents="none">
-                <div className={`door-plaque ${hovered ? "hovered" : ""} ${active ? "show" : ""}`}>{door.name}</div>
+                {/* Room 3's number hangs by one nail. */}
+                <div className={`door-plaque ${hovered ? "hovered" : ""} ${active ? "show" : ""} ${room.id === "office" ? "askew" : ""}`}>{room.plate}</div>
             </Html>
         </group>
     );
