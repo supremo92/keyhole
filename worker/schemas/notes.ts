@@ -1,8 +1,8 @@
 import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import { user } from "./auth";
 import { doors } from "./doors";
 
-// A door is a folder. Each user has doors in numbered slots on the hallway wall.
-
+// A note rests on a piece of furniture in a door's room.
 export const notes = sqliteTable(
     "notes",
     {
@@ -10,24 +10,27 @@ export const notes = sqliteTable(
             .primaryKey()
             .$defaultFn(() => crypto.randomUUID()),
         doorId: text("door_id")
-            .references(() => doors.id, { onDelete: "restrict" })
-            .notNull(),
-        userId: text("user_id").notNull(),
+            .notNull()
+            .references(() => doors.id, { onDelete: "restrict" }),
+        // Denormalised owner, so ownership checks don't need a join.
+        userId: text("user_id")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
         title: text("title").notNull(),
         bodyFront: text("body_front"),
         bodyBack: text("body_back"),
         colour: text("colour").notNull(),
         design: text("design").notNull(),
         furniture: text("furniture").notNull(),
+        // 0-7 are furniture slots; 8+ pile up on the floor (front-end rule).
         roomSlot: integer("room_slot").notNull(),
         createdAt: integer("created_at", { mode: "timestamp" })
             .notNull()
             .$defaultFn(() => new Date()),
         updatedAt: integer("updated_at", { mode: "timestamp" })
             .notNull()
+            .$defaultFn(() => new Date())
             .$onUpdateFn(() => new Date()),
     },
-    (t) => [
-        unique().on(t.doorId, t.roomSlot),
-    ],
+    (t) => [unique().on(t.doorId, t.roomSlot)],
 );

@@ -1,16 +1,17 @@
 import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import { user } from "./auth";
 
-// A door is a folder. Each user has doors in numbered slots on the hallway wall.
+// A door is a folder. Each user has doors in numbered slots along the hallway.
 export const doors = sqliteTable(
     "doors",
     {
-        // Text IDs, generated in code (crypto.randomUUID() works in Workers).
         id: text("id")
             .primaryKey()
             .$defaultFn(() => crypto.randomUUID()),
-        // Who owns this door. Becomes a foreign key to Better Auth's `user` table
-        // once those tables exist.
-        userId: text("user_id").notNull(),
+        // Owner. Always set from the session on the server, never from the request.
+        userId: text("user_id")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
         name: text("name").notNull(),
         colour: text("colour").notNull(),
 
@@ -25,14 +26,9 @@ export const doors = sqliteTable(
         carpetColour: text("carpet_colour").notNull(),
         windowLayout: text("window_layout").notNull(), // JSON string
 
-        // SQLite has no date type: stored as integer seconds, exposed as a Date.
         createdAt: integer("created_at", { mode: "timestamp" })
             .notNull()
             .$defaultFn(() => new Date()),
     },
-    (t) => [
-        // One user can't have two doors in the same spot.
-        unique().on(t.userId, t.floor, t.side, t.doorSlot),
-    ],
+    (t) => [unique().on(t.userId, t.floor, t.side, t.doorSlot)],
 );
-

@@ -5,7 +5,7 @@ export default defineConfig({
     // D1 is SQLite.
     dialect: "sqlite",
     // Where our table definitions live.
-    schema: ["./worker/db/doors.ts", "./worker/db/notes.ts"],
+    schema: ["./worker/schemas/auth.ts", "./worker/schemas/doors.ts", "./worker/schemas/notes.ts"],
     // Where generated migrations go. Must match `migrations_dir` in wrangler.jsonc.
     out: "./drizzle",
     // Only used by Drizzle Studio: the local D1 file. `generate` ignores this.
