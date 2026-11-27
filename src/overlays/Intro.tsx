@@ -4,20 +4,26 @@ export function Intro({ onClose }: { onClose: () => void }) {
         <div className="modal-stage">
             <div className="name-card intro-card">
                 <h2>⚿ Welcome to The Keyhole</h2>
-                <p>A notes app you can only see through keyholes.</p>
+                <p>
+                    Behind every door in this building sits an <strong>Operator</strong>. They can't read a word you write. They file
+                    your notes anyway, by following the Rulebook, and they always reply.
+                </p>
+                <p className="intro-small">Nobody here understands your notes. They are, however, extremely well organised.</p>
                 <ul>
                     <li>
-                        <strong>Every door is a folder.</strong> Scroll (or W/S) to walk down the hallway, and click a door to peek through its keyhole.
+                        <strong>Every door is a folder.</strong> Scroll (or W/S) to walk the hallway. Click a door to peek through its
+                        keyhole.
                     </li>
                     <li>
-                        <strong>Slide notes under the door.</strong> Peek again and they'll be resting on a piece of
-                        furniture.
+                        <strong>Slide notes under the door.</strong> Look down at the doormat and click the letter. The Operator files
+                        your note on a piece of furniture, then sends back a reply.
                     </li>
                     <li>
-                        <strong>Line up a note in the keyhole</strong> to read its label, and click to slide it back out and edit it. At the bottom of the screen, the arrow on the floor takes you back and the letter writes a new note.
+                        <strong>Line things up in the keyhole</strong> and click: take a note out to read or edit it, open the Rulebook
+                        on the Operator's desk, or say hello to the cat.
                     </li>
                     <li>
-                        <strong>Boarded-up doorways</strong> can be pried open to make a new door.
+                        <strong>Boarded-up doorways</strong> can be pried open to make a new door (and hire a new Operator).
                     </li>
                 </ul>
                 <div className="paper-actions intro-actions">

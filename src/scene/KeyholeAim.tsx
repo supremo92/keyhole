@@ -3,7 +3,8 @@ import { useEffect, useMemo, useRef } from "react";
 import { Raycaster, Vector2, type Object3D } from "three";
 import { leaveRoom, openNote, startWriting } from "../lib/flow";
 import { useView } from "../stores/view";
-import { AIM_NDC, DOORMAT_EXIT, DOORMAT_ZONE, EXIT_ID, WRITE_ID } from "./layout";
+import { sounds } from "../lib/sound";
+import { AIM_NDC, CAT_ID, DOORMAT_EXIT, DOORMAT_ZONE, EXIT_ID, RULEBOOK_ID, WRITE_ID } from "./layout";
 
 // Walk up the parents to find the interactive thing a mesh belongs to.
 function interactIdOf(object: Object3D | null): string | null {
@@ -54,6 +55,8 @@ export function KeyholeAim() {
             if (mode !== "peeking" || !hoveredId) return;
             if (hoveredId === EXIT_ID) void leaveRoom();
             else if (hoveredId === WRITE_ID) void startWriting();
+            else if (hoveredId === CAT_ID) sounds.meow();
+            else if (hoveredId === RULEBOOK_ID) useView.getState().set({ mode: "rulebook", hoveredId: null });
             else void openNote(hoveredId);
         };
         target.addEventListener("click", click);

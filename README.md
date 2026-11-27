@@ -21,6 +21,21 @@ Every room is decorated at random (wallpaper pattern and colours, carpet, and th
 
 There's no sign-up. Each visitor gets an anonymous account and a starter door with a few notes already inside.
 
+## The idea behind it: the Chinese Room
+
+The Keyhole is built around John Searle's 1980 thought experiment, the **Chinese Room**. A person who knows no Chinese sits in a closed room with a rulebook. Notes in Chinese are slid under the door, and the person answers them by matching symbols against the rules and copying out a reply. From outside, the room seems to understand Chinese. Inside, nobody understands a word.
+
+In The Keyhole, behind every door works an **Operator**:
+
+- **They reply.** Every note you slide under the door is answered by a deliberately mindless, numbered Rulebook ([shared/rulebook.ts](shared/rulebook.ts)), applied in the Worker. A question mark gets "Yes." (or "Ask the cat."), food gets "BISCUITS ACKNOWLEDGED. FILED UNDER NOURISHMENT.", numbers get added up "because it seemed important". While they work, lamplight appears under the door and the shadow of their feet walks across. The reply slides back out as a typed memo, and stays stapled to your note.
+- **They file.** Each room has the Operator's desk in the corner, with the open Rulebook. Aim the keyhole at it and click to read the rules, including where each of your notes was filed, written in the building's symbols with your real title pencilled in by someone else.
+- **They can't read.** Note labels appear first in invented symbols, then resolve into words. Notes come out stamped FILED, or sometimes NOT UNDERSTOOD (BUT FILED ANYWAY).
+- **Your turn.** Sometimes a paper slides out from under a boarded-up doorway. Pick it up and you become the Operator: find the matching rule, copy out the reply in symbols, and slide it back. You answer perfectly without understanding anything.
+
+And then there's **the cat**, which may be the only one in the building who understands anything. Each time you peek it's asleep on your notes, staring back at the keyhole, or knocking a note off the furniture while maintaining eye contact. The hallway light flickers.
+
+For demo videos, `?cat=sleep`, `?cat=stare` or `?cat=knock` forces the cat's mood, and `?stray=1` makes a paper appear in the hallway straight away.
+
 ## Tech stack
 
 | Layer | Choice |

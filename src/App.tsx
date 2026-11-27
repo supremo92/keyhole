@@ -6,12 +6,15 @@ import { useDoors, useNotes } from "./lib/api";
 import { ensureSession } from "./lib/auth-client";
 import { queryClient } from "./lib/queryClient";
 import { warmUpAudio } from "./lib/sound";
-import { leaveRoom } from "./lib/flow";
+import { leaveRoom, maybeStrayPaper } from "./lib/flow";
 import { Hud } from "./overlays/Hud";
 import { Intro } from "./overlays/Intro";
 import { KeyholeMask } from "./overlays/KeyholeMask";
 import { NamePrompt } from "./overlays/NamePrompt";
 import { PaperSheet } from "./overlays/PaperSheet";
+import { ReplySlip } from "./overlays/ReplySlip";
+import { RulebookOverlay } from "./overlays/RulebookOverlay";
+import { OperatorGame } from "./overlays/OperatorGame";
 import { CameraRig } from "./scene/CameraRig";
 import { KeyholeAim } from "./scene/KeyholeAim";
 import { Walker } from "./scene/Walker";
@@ -19,6 +22,7 @@ import { Hallway } from "./scene/Hallway";
 import { VIEWS, WALK } from "./scene/layout";
 import { Room } from "./scene/Room";
 import { SlidingPaper } from "./scene/SlidingPaper";
+import { StrayPaper } from "./scene/StrayPaper";
 import { useView } from "./stores/view";
 
 const INTRO_KEY = "keyhole-intro-seen";
@@ -50,6 +54,11 @@ function Keyhole() {
     const failed = auth === "error" || doors.isError;
     const introOpen = showIntro && !loading && mode === "hallway";
     useEffect(() => useView.getState().set({ paused: introOpen }), [introOpen]);
+
+    const hallwayReady = !!doors.data && !introOpen && mode === "hallway";
+    useEffect(() => {
+        if (hallwayReady && new URLSearchParams(location.search).has("stray")) maybeStrayPaper();
+    }, [hallwayReady]);
 
     const closeIntro = () => {
         localStorage.setItem(INTRO_KEY, "1");
@@ -94,6 +103,7 @@ function Keyhole() {
                     {doors.data && <Hallway doors={doors.data} />}
                     {door && roomId === door.id && <Room door={door} />}
                     <SlidingPaper />
+                    <StrayPaper />
                 </Canvas>
             </div>
 
@@ -102,6 +112,9 @@ function Keyhole() {
 
             {mode === "writing" && door && <PaperSheet mode="write" doorId={door.id} />}
             {mode === "reading" && door && note && <PaperSheet key={note.id} mode="read" doorId={door.id} note={note} />}
+            {mode === "reply" && note && <ReplySlip key={note.id} note={note} />}
+            {mode === "rulebook" && <RulebookOverlay notes={notes.data ?? []} />}
+            {mode === "operating" && <OperatorGame />}
             {mode === "naming" && doorSlot !== null && <NamePrompt slot={doorSlot} />}
             {introOpen && <Intro onClose={closeIntro} />}
 
@@ -110,7 +123,7 @@ function Keyhole() {
                 <div className="splash">
                     <div className="splash-key">⚿</div>
                     <h1>The Keyhole</h1>
-                    <p>{failed ? "The hallway is locked. Try refreshing the page." : "Finding your hallway..."}</p>
+                    <p>{failed ? "The hallway is locked. Try refreshing the page." : "The Operators are expecting you..."}</p>
                 </div>
             )}
         </div>

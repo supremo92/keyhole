@@ -24,6 +24,8 @@ export const DOORMAT_PITCH = -0.38;
 // Ids of the clickable things in a room that aren't notes.
 export const EXIT_ID = "exit";
 export const WRITE_ID = "write";
+export const CAT_ID = "cat";
+export const RULEBOOK_ID = "rulebook";
 
 // Rooms are drawn far away from the hallway; the keyhole hides the jump.
 export const ROOM_ORIGIN: Vec3 = [100, 0, 0];

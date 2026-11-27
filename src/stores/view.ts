@@ -4,7 +4,10 @@ import { VIEWS, WALK, type View } from "../scene/layout";
 // hallway: looking down the corridor. moving: camera in flight, input ignored.
 // peeking: looking into a room through the keyhole. writing/reading: paper note open.
 // naming: a doorway has been unboarded and needs a name.
-export type Mode = "hallway" | "moving" | "peeking" | "writing" | "reading" | "naming";
+// reply: the Operator's reply to note noteId has just slid out from under the door.
+// rulebook: peeking, with the Operator's Rulebook open.
+// operating: answering a paper that came from behind a boarded doorway (you're the Operator).
+export type Mode = "hallway" | "moving" | "peeking" | "writing" | "reading" | "naming" | "reply" | "rulebook" | "operating";
 
 type CamTarget = View & { instant: boolean; seq: number };
 
@@ -18,6 +21,8 @@ type ViewState = {
     // The room actually drawn (set once the screen is blacked out, see flow.intoRoom).
     roomId: string | null;
     slide: Slide | null;
+    // When (performance.now()) the Operator started processing a note behind the door.
+    processingSince: number | null;
     noteId: string | null;
     unboarding: number | null;
     blackout: boolean;
@@ -30,6 +35,9 @@ type ViewState = {
     paused: boolean;
     // Peeking and looking down at the doormat icons (pointer visible).
     doormat: boolean;
+    // A paper waiting on the floor outside this boarded doorway, for you to answer.
+    strayPaper: number | null;
+    strayAnswered: boolean;
     walkTo: (z: number) => void;
     set: (patch: Partial<Omit<ViewState, "set" | "moveCam" | "walkTo">>) => void;
     moveCam: (view: View, instant?: boolean) => void;
@@ -41,6 +49,7 @@ export const useView = create<ViewState>((set, get) => ({
     doorSlot: null,
     roomId: null,
     slide: null,
+    processingSince: null,
     noteId: null,
     unboarding: null,
     blackout: false,
@@ -50,6 +59,8 @@ export const useView = create<ViewState>((set, get) => ({
     hoveredId: null,
     paused: false,
     doormat: false,
+    strayPaper: null,
+    strayAnswered: false,
     walkTo: (z) => {
         if (get().paused) return;
         const hallZ = Math.min(WALK.max, Math.max(WALK.min, z));

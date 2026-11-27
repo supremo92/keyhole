@@ -1,13 +1,21 @@
 import { Html } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import type { Group } from "three";
 import { MAX_FURNITURE_SLOTS, type Wall, type WindowSpec } from "../../shared/constants";
 import type { Door, Note } from "../../shared/types";
 import { useNotes } from "../lib/api";
+import { useDecipher } from "../lib/glyphs";
 import { useView } from "../stores/view";
 import { Box } from "./Box";
+import { Cat } from "./Cat";
+import { pickCatPlan, type CatPhase, type CatPlan } from "./catPlan";
 import { DoormatIcons } from "./DoormatIcons";
+import { OperatorDesk } from "./OperatorDesk";
 import { Furniture, NOTE_SPOT } from "./Furniture";
 import { OUTLINE_AIMED, OUTLINE_IDLE, OutlineContext } from "./outline";
 import { ROOM, ROOM_ORIGIN, type Vec3 } from "./layout";
+import { sounds } from "../lib/sound";
 import { carpet, sky, wallpaper } from "./textures";
 
 const HALF_W = ROOM.width / 2;
@@ -61,24 +69,44 @@ function RoomWindow({ spec }: { spec: WindowSpec }) {
     );
 }
 
+const CatContext = createContext<{ plan: CatPlan | null; phase: CatPhase }>({ plan: null, phase: "waiting" });
+
 // Things the keyhole can be aimed at carry { interactId } in userData (see KeyholeAim).
 
 function NoteLabel({ note, show }: { note: Note; show: boolean }) {
+    // The title arrives as the building's symbols, then resolves into words.
+    const title = useDecipher(note.title, show);
     const date = new Date(note.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
     return (
         // Always mounted (drei Html dislikes mounting on hover); shown with CSS.
         <Html position={[0, 0.3, 0]} center zIndexRange={[5, 0]} pointerEvents="none">
             <div className={`note-label ${show ? "show" : ""}`}>
-                <strong>{note.title}</strong>
+                <strong>{title}</strong>
                 <span>{date}</span>
             </div>
         </Html>
     );
 }
 
-function PaperNote({ note, position, rotY, aimed }: { note: Note; position: Vec3; rotY: number; aimed: boolean }) {
+// How long a knocked-off note takes to slide off the edge and drop to the floor.
+const FALL_TIME = 0.75;
+
+function PaperNote({ note, position, rotY, aimed, knocked = false }: { note: Note; position: Vec3; rotY: number; aimed: boolean; knocked?: boolean }) {
+    const group = useRef<Group>(null);
+    const knockedAt = useRef<number | null>(null);
+    useFrame(({ clock }) => {
+        const g = group.current;
+        if (!g || !knocked) return;
+        knockedAt.current ??= clock.elapsedTime;
+        // Slide sideways off the edge, then fall (accelerating) and tumble to the floor.
+        const t = Math.min(1, (clock.elapsedTime - knockedAt.current) / FALL_TIME);
+        g.position.x = position[0] + t * 0.6;
+        g.position.y = position[1] + 0.005 - (position[1] - 0.005 + 0.003) * Math.min(1, Math.max(0, (t - 0.25) / 0.75) ** 2);
+        g.rotation.z = Math.sin(Math.min(1, t * 1.5) * Math.PI) * -0.9;
+        g.rotation.y = rotY + t * 1.4;
+    });
     return (
-        <group position={position} rotation={[0, rotY, 0]}>
+        <group ref={group} position={position} rotation={[0, rotY, 0]}>
             {/* Invisible, slightly bigger target so the thin paper is easy to aim at. */}
             <mesh position={[0, 0.06, 0]}>
                 <boxGeometry args={[0.5, 0.14, 0.6]} />
@@ -98,15 +126,23 @@ function Placed({ note }: { note: Note }) {
     const aimed = useView((s) => s.mode === "peeking" && s.hoveredId === note.id);
     const r = hash(note.id);
     const target = { interactId: note.id };
+    const { plan, phase } = useContext(CatContext);
+    const cat = plan?.noteId === note.id ? plan : null;
 
     if (note.roomSlot < MAX_FURNITURE_SLOTS) {
         const [x, z, rot] = SLOTS[note.roomSlot];
+        const spot = NOTE_SPOT[note.furniture];
         return (
             <group position={[x, 0, z]} rotation={[0, rot, 0]} userData={target}>
                 <OutlineContext.Provider value={aimed ? OUTLINE_AIMED : OUTLINE_IDLE}>
                     <Furniture type={note.furniture} />
                 </OutlineContext.Provider>
-                <PaperNote note={note} position={NOTE_SPOT[note.furniture]} rotY={(r - 0.5) * 0.8} aimed={aimed} />
+                <PaperNote note={note} position={spot} rotY={(r - 0.5) * 0.8} aimed={aimed} knocked={!!cat && phase === "knocked"} />
+                {/* Asleep on top of the note, or sitting just to its left ready to swat it. */}
+                {cat?.mood === "sleep" && <Cat mood="sleep" coat={cat.coat} position={[spot[0], spot[1] + 0.01, spot[2]]} rotY={r * 2} />}
+                {cat?.mood === "knock" && (
+                    <Cat mood="knock" coat={cat.coat} position={[spot[0] - 0.27, spot[1] - 0.005, spot[2] - 0.02]} swat={phase === "swatting"} />
+                )}
             </group>
         );
     }
@@ -120,8 +156,43 @@ function Placed({ note }: { note: Note }) {
     );
 }
 
+// The notes on their furniture, and the cat. Only drawn once the notes have loaded,
+// so the cat's plan for this visit can be decided straight away.
+function RoomContents({ notes }: { notes: Note[] }) {
+    const [catPlan] = useState<CatPlan>(() => pickCatPlan(notes));
+    const [catPhase, setCatPhase] = useState<CatPhase>("waiting");
+    const peeking = useView((s) => s.mode === "peeking");
+
+    // In the knock mood: give you a moment to notice, then swat the note off.
+    useEffect(() => {
+        if (catPlan.mood !== "knock" || catPhase !== "waiting" || !peeking) return;
+        const swat = setTimeout(() => setCatPhase("swatting"), 1800 + Math.random() * 1500);
+        return () => clearTimeout(swat);
+    }, [catPlan, catPhase, peeking]);
+    useEffect(() => {
+        if (catPhase !== "swatting") return;
+        const drop = setTimeout(() => {
+            setCatPhase("knocked");
+            sounds.slide();
+        }, 720);
+        return () => clearTimeout(drop);
+    }, [catPhase]);
+
+    return (
+        <>
+            <CatContext.Provider value={{ plan: catPlan, phase: catPhase }}>
+                {notes.map((n) => (
+                    <Placed key={n.id} note={n} />
+                ))}
+            </CatContext.Provider>
+            {/* Nothing to sit on: the cat sits in the middle of the floor and stares. */}
+            {catPlan.mood === "stare" && <Cat mood="stare" coat={catPlan.coat} position={[-0.8, 0, -2.3]} rotY={0.35} />}
+        </>
+    );
+}
+
 export function Room({ door }: { door: Door }) {
-    const { data: notes = [] } = useNotes(door.id);
+    const { data: notes, isSuccess } = useNotes(door.id);
     const walls = wallpaper(door.wallpaper, door.wallColours, [ROOM.width / 1.2, ROOM.height / 1.2]);
     const floor = carpet(door.carpetColour, [3, 3]);
 
@@ -169,9 +240,8 @@ export function Room({ door }: { door: Door }) {
             <pointLight position={[0, ROOM.height - 0.4, -D / 2]} intensity={20} distance={14} decay={1.4} color="#ffe6bd" castShadow />
 
             <DoormatIcons />
-            {notes.map((n) => (
-                <Placed key={n.id} note={n} />
-            ))}
+            <OperatorDesk />
+            {isSuccess && <RoomContents notes={notes} />}
         </group>
     );
 }

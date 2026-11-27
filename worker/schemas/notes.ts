@@ -22,6 +22,9 @@ export const notes = sqliteTable(
         colour: text("colour").notNull(),
         design: text("design").notNull(),
         furniture: text("furniture").notNull(),
+        // The Operator's reply, written by following the Rulebook (shared/rulebook.ts).
+        reply: text("reply"),
+        replyRule: integer("reply_rule"),
         // 0-7 are furniture slots; 8+ pile up on the floor (front-end rule).
         roomSlot: integer("room_slot").notNull(),
         createdAt: integer("created_at", { mode: "timestamp" })

@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { operatorReply } from "../../shared/rulebook";
 import { createDoorSchema, noteInputSchema } from "../../shared/schemas";
 import { doors, notes } from "../schemas";
 import { randomFurniture, randomPaper, randomRoomStyle } from "../lib/random";
@@ -72,6 +73,8 @@ export const doorRoutes = new Hono<AppEnv>()
         let roomSlot = 0;
         while (taken.has(roomSlot)) roomSlot++;
 
+        // The Operator answers by the Rulebook, without understanding a word.
+        const reply = operatorReply(title, body);
         const [row] = await db
             .insert(notes)
             .values({
@@ -83,6 +86,8 @@ export const doorRoutes = new Hono<AppEnv>()
                 design: "plain",
                 furniture: randomFurniture(),
                 roomSlot,
+                reply: reply.text,
+                replyRule: reply.rule,
             })
             .returning();
         return c.json(toNote(row), 201);

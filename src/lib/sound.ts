@@ -69,4 +69,71 @@ export const sounds = {
     click() {
         noiseBurst({ duration: 0.05, gain: 0.2, type: "highpass", freq: 3000 });
     },
+    // Knuckles on wood, from the other side. Happy knocks are quick and bright.
+    knock(times = 3, happy = true) {
+        for (let i = 0; i < times; i++) {
+            const at = i * (happy ? 0.16 : 0.32);
+            noiseBurst({ at, duration: 0.09, gain: 0.5, type: "lowpass", freq: happy ? 520 : 300 });
+            noiseBurst({ at, duration: 0.03, gain: 0.15, type: "bandpass", freq: 1500, q: 3 });
+        }
+    },
+    // A long, disappointed breath behind the planks.
+    sigh() {
+        noiseBurst({ duration: 1.1, gain: 0.12, type: "bandpass", freq: 700, freqTo: 300, q: 0.7 });
+    },
+    // A heavy page turning.
+    page() {
+        noiseBurst({ duration: 0.35, gain: 0.1, type: "bandpass", freq: 1800, freqTo: 600, q: 0.6 });
+    },
+    // Someone on the other side of the door shuffling through papers.
+    shuffle() {
+        [0, 0.22, 0.5, 0.65].forEach((at, i) =>
+            noiseBurst({ at, duration: 0.18 + (i % 2) * 0.1, gain: 0.05, type: "bandpass", freq: 3200 - i * 300, q: 0.9 }),
+        );
+    },
+    // A rubber stamp coming down hard on a desk.
+    stamp() {
+        noiseBurst({ duration: 0.12, gain: 0.5, type: "lowpass", freq: 180 });
+        noiseBurst({ duration: 0.04, gain: 0.2, type: "bandpass", freq: 1200, q: 2 });
+    },
+    // A cat's meow: a buzzy tone that rises then falls, through a moving "mouth" filter.
+    meow() {
+        const ac = audio();
+        const t = ac.currentTime;
+        const osc = ac.createOscillator();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(520, t);
+        osc.frequency.exponentialRampToValueAtTime(820, t + 0.18);
+        osc.frequency.exponentialRampToValueAtTime(430, t + 0.55);
+        const mouth = ac.createBiquadFilter();
+        mouth.type = "bandpass";
+        mouth.Q.value = 4;
+        mouth.frequency.setValueAtTime(900, t);
+        mouth.frequency.exponentialRampToValueAtTime(2200, t + 0.15);
+        mouth.frequency.exponentialRampToValueAtTime(800, t + 0.55);
+        const g = ac.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.25, t + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+        osc.connect(mouth).connect(g).connect(ac.destination);
+        osc.start(t);
+        osc.stop(t + 0.62);
+    },
+    // A faulty light: a short electrical buzz (mains hum plus crackle).
+    buzz(duration = 0.12, gain = 0.03) {
+        // Ambient: stay silent until the browser has allowed audio (after a click).
+        if (ctx?.state !== "running") return;
+        const ac = ctx;
+        const start = ac.currentTime;
+        const osc = ac.createOscillator();
+        osc.type = "sawtooth";
+        osc.frequency.value = 100;
+        const g = ac.createGain();
+        g.gain.setValueAtTime(gain, start);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        osc.connect(g).connect(ac.destination);
+        osc.start(start);
+        osc.stop(start + duration);
+        noiseBurst({ duration: duration * 0.6, gain: gain * 2, type: "highpass", freq: 4000 });
+    },
 };

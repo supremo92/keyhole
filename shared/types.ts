@@ -21,6 +21,9 @@ export type Note = {
     colour: string;
     furniture: FurnitureType;
     roomSlot: number;
+    // The Operator's reply (see shared/rulebook.ts), and the number of the rule it followed.
+    reply: string | null;
+    replyRule: number | null;
     createdAt: string;
     updatedAt: string;
 };

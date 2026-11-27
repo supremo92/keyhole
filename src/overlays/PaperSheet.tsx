@@ -2,12 +2,25 @@ import { useEffect, useRef, useState } from "react";
 import { LIMITS } from "../../shared/constants";
 import type { Note } from "../../shared/types";
 import { useCreateNote, useUpdateNote } from "../lib/api";
-import { backToRoom, slideUnderDoor } from "../lib/flow";
+import { awaitReply, backToRoom, slideUnderDoor } from "../lib/flow";
 import { sounds } from "../lib/sound";
 
 type Props = { mode: "write"; doorId: string } | { mode: "read"; doorId: string; note: Note };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Every note that comes out from under the door has been through the Operator's hands,
+// and stamped. Now and then the stamp is more honest than usual.
+function Stamp({ note }: { note: Note }) {
+    const honest = [...note.id].reduce((h, c) => h + c.charCodeAt(0), 0) % 4 === 0;
+    const date = new Date(note.createdAt).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+    return (
+        <div className={honest ? "stamp stamp-honest" : "stamp"} aria-hidden>
+            <strong>{honest ? "NOT UNDERSTOOD" : "FILED"}</strong>
+            <span>{honest ? "BUT FILED ANYWAY" : date}</span>
+        </div>
+    );
+}
 
 // The paper note: typed on, then slid under the door (or slid out, edited and slid back).
 export function PaperSheet(props: Props) {
@@ -30,11 +43,13 @@ export function PaperSheet(props: Props) {
     }, [props.mode]);
 
     // Put the paper down on the floor (it drops out of view), then slide it under the door.
-    async function putDownAndSlide() {
+    // A note that was just saved gets processed, and the Operator replies.
+    async function putDownAndSlide(saved?: Note) {
         setPhase("out");
         await sleep(450);
-        await slideUnderDoor(existing?.colour);
-        await backToRoom();
+        await slideUnderDoor(saved?.colour ?? existing?.colour);
+        if (saved?.reply) await awaitReply(saved.id);
+        else await backToRoom();
     }
 
     async function slideUnder() {
@@ -45,13 +60,12 @@ export function PaperSheet(props: Props) {
         setError(null);
         try {
             const changed = !existing || existing.title !== title || existing.body !== body;
-            const save = !changed
-                ? Promise.resolve()
+            const saved = !changed
+                ? undefined
                 : existing
-                  ? updateNote.mutateAsync({ id: existing.id, title, body })
-                  : createNote.mutateAsync({ doorId: props.doorId, title, body });
-            await save;
-            await putDownAndSlide();
+                  ? await updateNote.mutateAsync({ id: existing.id, title, body })
+                  : await createNote.mutateAsync({ doorId: props.doorId, title, body });
+            await putDownAndSlide(saved);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Couldn't save the note.");
         }
@@ -92,6 +106,14 @@ export function PaperSheet(props: Props) {
                     onChange={(e) => setBody(e.target.value)}
                     disabled={busy}
                 />
+                {existing && <Stamp note={existing} />}
+                {existing?.reply && (
+                    // The Operator's last reply, stapled to the bottom of the note.
+                    <div className="stapled-reply">
+                        <span className="staple" />
+                        <em>The Operator replied (Rule {existing.replyRule}):</em> {existing.reply}
+                    </div>
+                )}
                 {existing && (
                     <div className="paper-meta">
                         Written {new Date(existing.createdAt).toLocaleString()}

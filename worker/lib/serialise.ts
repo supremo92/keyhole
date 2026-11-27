@@ -25,6 +25,8 @@ export function toNote(row: typeof notes.$inferSelect): Note {
         colour: row.colour,
         furniture: row.furniture as Note["furniture"],
         roomSlot: row.roomSlot,
+        reply: row.reply,
+        replyRule: row.replyRule,
         createdAt: row.createdAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),
     };

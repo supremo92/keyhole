@@ -3,6 +3,7 @@ import { useView } from "../stores/view";
 
 export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: Note[] | undefined; onHelp: () => void }) {
     const mode = useView((s) => s.mode);
+    const stray = useView((s) => s.strayPaper !== null);
 
     return (
         <>
@@ -18,7 +19,9 @@ export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: No
 
             {mode === "hallway" && (
                 <div className="hint">
-                    Scroll or use W/S to walk. Click a door to peek through its keyhole, or a boarded-up doorway to pry it open.
+                    {stray
+                        ? "A paper has slid out from under one of the boarded-up doorways. Someone in there needs an Operator. Click it to pick it up."
+                        : "Scroll or use W/S to walk. Click a door to peek through its keyhole, or a boarded-up doorway to pry it open."}
                 </div>
             )}
 
@@ -32,8 +35,8 @@ export function Hud({ door, notes, onHelp }: { door: Door | undefined; notes: No
                     </div>
                     <div className="hint top">
                         {notes?.length
-                            ? "Move the mouse to look around. Line something up in the keyhole and click to take its note out. Move to the bottom of the screen to write a note or leave."
-                            : "An empty room. Move to the bottom of the screen and click the letter to slide a note under the door."}
+                            ? "Move the mouse to look around. Line something up in the keyhole and click it: a note, the cat, or the Rulebook on the Operator's desk. Move to the bottom of the screen to write a note or leave."
+                            : "An empty room, and an Operator with nothing to do. Move to the bottom of the screen and click the letter to slide a note under the door."}
                     </div>
                 </>
             )}
