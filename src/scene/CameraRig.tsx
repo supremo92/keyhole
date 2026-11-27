@@ -6,7 +6,7 @@ import { AIM_NDC } from "./layout";
 
 // Furthest the peeking view turns (radians) at the screen edges. Looking all the way down
 // (bottom of the screen) brings the doormat icons just inside the door into the keyhole.
-const MAX_YAW = 1.15;
+const MAX_YAW = 0.9;
 const MAX_UP = 0.5;
 const MAX_DOWN = 0.82;
 // Where (in screen coordinates, -1 to 1) the view reaches its full turn and full downward tilt.

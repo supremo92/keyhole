@@ -10,6 +10,10 @@ import { carpet, nightSky, wallpaper } from "./textures";
 
 const HALF_W = ROOM.width / 2;
 const D = ROOM.depth;
+// The side walls, ceiling and skirting run on past the door (behind the keyhole), so turning
+// to look sideways never shows where the room ends.
+const SIDE = D + 2;
+const SIDE_Z = -D / 2 + 1;
 
 const WALLS: Record<Wall, { position: Vec3; rotY: number }> = {
     back: { position: [0, 1.6, -D + 0.01], rotY: 0 },
@@ -51,6 +55,8 @@ export function Room({ room }: { room: RoomDef }) {
     const cat: CatSpot = status("party") !== "solved" ? "none" : roll < 0.3 ? "usual" : roll < 0.6 ? "note" : "none";
 
     const walls = wallpaper(room.wallpaper, room.walls, [ROOM.width / 1.2, ROOM.height / 1.2]);
+    // Same pattern scale on the longer side walls.
+    const sideWalls = wallpaper(room.wallpaper, room.walls, [SIDE / 1.2, ROOM.height / 1.2]);
     const floor = carpet(room.carpet, [3, 3]);
 
     return (
@@ -60,29 +66,29 @@ export function Room({ room }: { room: RoomDef }) {
                 <planeGeometry args={[ROOM.width, D + 2]} />
                 <meshStandardMaterial map={floor} roughness={1} />
             </mesh>
-            <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, ROOM.height, -D / 2]}>
-                <planeGeometry args={[ROOM.width, D]} />
+            <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, ROOM.height, SIDE_Z]}>
+                <planeGeometry args={[ROOM.width, SIDE]} />
                 <meshStandardMaterial color="#e6dfd2" />
             </mesh>
             <mesh position={[0, ROOM.height / 2, -D]} receiveShadow>
                 <planeGeometry args={[ROOM.width, ROOM.height]} />
                 <meshStandardMaterial map={walls} />
             </mesh>
-            <mesh position={[-HALF_W, ROOM.height / 2, -D / 2]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
-                <planeGeometry args={[D, ROOM.height]} />
-                <meshStandardMaterial map={walls} />
+            <mesh position={[-HALF_W, ROOM.height / 2, SIDE_Z]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+                <planeGeometry args={[SIDE, ROOM.height]} />
+                <meshStandardMaterial map={sideWalls} />
             </mesh>
-            <mesh position={[HALF_W, ROOM.height / 2, -D / 2]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
-                <planeGeometry args={[D, ROOM.height]} />
-                <meshStandardMaterial map={walls} />
+            <mesh position={[HALF_W, ROOM.height / 2, SIDE_Z]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+                <planeGeometry args={[SIDE, ROOM.height]} />
+                <meshStandardMaterial map={sideWalls} />
             </mesh>
             <mesh position={[0, ROOM.height / 2, 0]} rotation={[0, Math.PI, 0]}>
                 <planeGeometry args={[ROOM.width, ROOM.height]} />
                 <meshStandardMaterial map={walls} />
             </mesh>
             <Box size={[ROOM.width, 0.12, 0.03]} position={[0, 0.06, -D + 0.015]} color="#e8e0d0" />
-            <Box size={[0.03, 0.12, D]} position={[-HALF_W + 0.015, 0.06, -D / 2]} color="#e8e0d0" />
-            <Box size={[0.03, 0.12, D]} position={[HALF_W - 0.015, 0.06, -D / 2]} color="#e8e0d0" />
+            <Box size={[0.03, 0.12, SIDE]} position={[-HALF_W + 0.015, 0.06, SIDE_Z]} color="#e8e0d0" />
+            <Box size={[0.03, 0.12, SIDE]} position={[HALF_W - 0.015, 0.06, SIDE_Z]} color="#e8e0d0" />
 
             {room.windows.map((w, i) => (
                 <RoomWindow key={i} spec={w} />
